@@ -112,7 +112,7 @@ export function buildTrackScene(track) {
   let minY = Infinity, cx = 0, cz = 0;
   for (let i = 0; i < N; i++) { minY = Math.min(minY, track.pos[i * 3 + 1]); cx += track.pos[i * 3]; cz += track.pos[i * 3 + 2]; }
   cx /= N; cz /= N;
-  const groundY = minY - 1.2;
+  const groundY = minY - 1.2 - (th.groundDrop || 0);
   track.groundY = groundY;
   track.center = new THREE.Vector3(cx, groundY, cz);
   const gTex = TX.groundTexture(th.ground);
@@ -228,25 +228,70 @@ function decorKinds() {
   const caneMat = new THREE.MeshLambertMaterial({ map: TX.stripeTexture('#ffffff', '#e8143c') });
   caneMat.map.repeat.set(6, 1);
 
+  // world 2 props
+  const ice = new THREE.MeshPhongMaterial({ color: '#dff4ff', shininess: 120, transparent: true, opacity: 0.85 });
+  const iceTree = new THREE.ConeGeometry(2.2, 7, 7).translate(0, 3.5, 0);
+  const iceTree2 = new THREE.ConeGeometry(1.5, 4, 7).translate(0, 6.5, 0);
+  const bearBody = new THREE.SphereGeometry(1.6, 16, 12).scale(1, 1.25, 0.9).translate(0, 2, 0);
+  const bearHead = new THREE.SphereGeometry(1.15, 16, 12).translate(0, 4.4, 0);
+  const bearLimbs = mergeSpheres([[-0.8, 5.3, 0, 0.45], [0.8, 5.3, 0, 0.45], [-1.4, 2.7, 0.3, 0.55], [1.4, 2.7, 0.3, 0.55], [-0.8, 0.4, 0.2, 0.6], [0.8, 0.4, 0.2, 0.6]]);
+  const gummyMat = new THREE.MeshPhongMaterial({ color: '#ffffff', shininess: 110, transparent: true, opacity: 0.82 });
+  const cloud = mergeSpheres([[0, 1.5, 0, 2.2], [2, 1.2, 0.5, 1.7], [-2, 1.1, -0.3, 1.6], [0.8, 2.8, 0, 1.5]]);
+  const cloudMat = new THREE.MeshLambertMaterial({ color: '#ffffff', emissive: '#ffd6ef', emissiveIntensity: 0.3 });
+  const chimney = new THREE.CylinderGeometry(1.2, 1.5, 12, 12).translate(0, 6, 0);
+  const chimneyBand = new THREE.CylinderGeometry(1.32, 1.32, 1.2, 12).translate(0, 10, 0);
+  const gray = new THREE.MeshLambertMaterial({ color: '#8a8f9e' });
+  const volcano = new THREE.ConeGeometry(9, 14, 12, 1, true).translate(0, 7, 0);
+  const volcanoTop = new THREE.CylinderGeometry(2.6, 2.6, 0.6, 12).translate(0, 13.6, 0);
+  const lava = new THREE.MeshBasicMaterial({ color: '#ff7a1a' });
+  const rock = new THREE.MeshLambertMaterial({ color: '#4a2c22', side: THREE.DoubleSide });
+
   return [
-    { w: 3, parts: [{ g: stick, m: white }, { g: disc, m: swirlMat }] },
-    { w: 2, parts: [{ g: stick, m: white }, { g: disc, m: swirlMat2 }] },
-    { w: 4, parts: [{ g: gum, m: tinted, color: true }] },
-    { w: 3, parts: [{ g: wrapper, m: tinted, color: true }, { g: frosting, m: white }, { g: cherry, m: red }] },
-    { w: 2, parts: [{ g: donut, m: tinted, color: true }] },
-    { w: 2, parts: [{ g: cone, m: coneMat }, { g: scoop, m: tinted, color: true }, { g: scoop2, m: tinted, color: true }] },
-    { w: 3, parts: [{ g: trunk, m: brown }, { g: puff, m: tinted, color: true }] },
-    { w: 2, parts: [{ g: cane, m: caneMat }] },
+    { key: 'lolli', w: 3, parts: [{ g: stick, m: white }, { g: disc, m: swirlMat }] },
+    { key: 'lolli2', w: 2, parts: [{ g: stick, m: white }, { g: disc, m: swirlMat2 }] },
+    { key: 'gum', w: 4, parts: [{ g: gum, m: tinted, color: true }] },
+    { key: 'cupcake', w: 3, parts: [{ g: wrapper, m: tinted, color: true }, { g: frosting, m: white }, { g: cherry, m: red }] },
+    { key: 'donut', w: 2, parts: [{ g: donut, m: tinted, color: true }] },
+    { key: 'cone', w: 2, parts: [{ g: cone, m: coneMat }, { g: scoop, m: tinted, color: true }, { g: scoop2, m: tinted, color: true }] },
+    { key: 'tree', w: 3, parts: [{ g: trunk, m: brown }, { g: puff, m: tinted, color: true }] },
+    { key: 'cane', w: 2, parts: [{ g: cane, m: caneMat }] },
+    { key: 'icetree', w: 4, parts: [{ g: iceTree, m: ice }, { g: iceTree2, m: ice }] },
+    { key: 'bear', w: 4, parts: [{ g: bearBody, m: gummyMat, color: true }, { g: bearHead, m: gummyMat, color: true }, { g: bearLimbs, m: gummyMat, color: true }] },
+    { key: 'cloud', w: 4, parts: [{ g: cloud, m: cloudMat }] },
+    { key: 'chimney', w: 3, clear: 6, parts: [{ g: chimney, m: gray }, { g: chimneyBand, m: red }] },
+    { key: 'volcano', w: 2, clear: 18, parts: [{ g: volcano, m: rock }, { g: volcanoTop, m: lava }] },
   ];
+}
+
+// several spheres in one geometry (one instanced draw call)
+function mergeSpheres(list) {
+  const geos = list.map(([x, y, z, r]) => new THREE.SphereGeometry(r, 12, 9).translate(x, y, z).toNonIndexed());
+  let count = 0;
+  for (const g of geos) count += g.attributes.position.count;
+  const pos = new Float32Array(count * 3), nor = new Float32Array(count * 3);
+  let o = 0;
+  for (const g of geos) {
+    pos.set(g.attributes.position.array, o * 3);
+    nor.set(g.attributes.normal.array, o * 3);
+    o += g.attributes.position.count;
+  }
+  const out = new THREE.BufferGeometry();
+  out.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  out.setAttribute('normal', new THREE.BufferAttribute(nor, 3));
+  return out;
 }
 
 function buildDecor(track, rand, groundY) {
   const group = new THREE.Group();
-  const kinds = decorKinds();
+  const all = decorKinds();
+  const wanted = track.def.theme.decor;
+  // a theme can pick its own props (repeat a key to make it more common)
+  const kinds = wanted ? wanted.map(k => ({ ...all.find(d => d.key === k) })) : all.filter(d => ['lolli', 'lolli2', 'gum', 'cupcake', 'donut', 'cone', 'tree', 'cane'].includes(d.key));
   const totalW = kinds.reduce((a, k) => a + k.w, 0);
   const pick = () => { let r = rand() * totalW; for (const k of kinds) { r -= k.w; if (r <= 0) return k; } return kinds[0]; };
   const placed = kinds.map(() => []);
   const N = track.N, hw = track.width / 2;
+  const drop = track.def.theme.groundDrop || 0;
 
   const clear = (x, z, r) => {
     for (let j = 0; j < N; j += 3) {
@@ -262,18 +307,21 @@ function buildDecor(track, rand, groundY) {
       const d = hw + 5 + rand() * rand() * 45;
       const px = track.pos[i * 3] + track.right[i * 3] * side * d;
       const pz = track.pos[i * 3 + 2] + track.right[i * 3 + 2] * side * d;
-      if (!clear(px, pz, 4)) continue;
       const kind = pick();
-      placed[kinds.indexOf(kind)].push({ x: px, z: pz, s: 0.8 + rand() * 0.9, r: rand() * Math.PI * 2, c: PALETTE[Math.floor(rand() * PALETTE.length)] });
+      if (!clear(px, pz, kind.clear || 4)) continue;
+      // on a sky track, clouds float just below the road instead of sitting on the far ground
+      const y = kind.key === 'cloud' && drop ? track.pos[i * 3 + 1] - 6 - rand() * 18 : groundY;
+      placed[kinds.indexOf(kind)].push({ x: px, y, z: pz, s: 0.8 + rand() * 0.9, r: rand() * Math.PI * 2, c: PALETTE[Math.floor(rand() * PALETTE.length)] });
     }
   }
   // scattered far field
   for (let n = 0; n < 160; n++) {
     const a = rand() * Math.PI * 2, d = 80 + rand() * 380;
     const px = track.center.x + Math.cos(a) * d, pz = track.center.z + Math.sin(a) * d;
-    if (!clear(px, pz, 6)) continue;
     const kind = pick();
-    placed[kinds.indexOf(kind)].push({ x: px, z: pz, s: 1.2 + rand() * 1.6, r: rand() * Math.PI * 2, c: PALETTE[Math.floor(rand() * PALETTE.length)] });
+    if (!clear(px, pz, (kind.clear || 4) + 2)) continue;
+    const y = kind.key === 'cloud' && drop ? groundY + rand() * drop : groundY;
+    placed[kinds.indexOf(kind)].push({ x: px, y, z: pz, s: 1.2 + rand() * 1.6, r: rand() * Math.PI * 2, c: PALETTE[Math.floor(rand() * PALETTE.length)] });
   }
 
   const m = new THREE.Matrix4(), q = new THREE.Quaternion(), col = new THREE.Color();
@@ -284,7 +332,7 @@ function buildDecor(track, rand, groundY) {
       const inst = new THREE.InstancedMesh(part.g, part.m, list.length);
       list.forEach((p, k) => {
         q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), p.r);
-        m.compose(new THREE.Vector3(p.x, groundY, p.z), q, new THREE.Vector3(p.s, p.s, p.s));
+        m.compose(new THREE.Vector3(p.x, p.y, p.z), q, new THREE.Vector3(p.s, p.s, p.s));
         inst.setMatrixAt(k, m);
         if (part.color) inst.setColorAt(k, col.set(p.c));
       });

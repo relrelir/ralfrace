@@ -179,4 +179,72 @@ export const TRACKS = [
       ['T', -90, 30], ['T', 90, 30], ['boost'], ['S', 70], ['items'], ['T', 120, 45], ['S', 40, 0, 'adj'], ['T', 60, 40], ['coins', -3], ['S', 30],
     ],
   },
+
+  // ---------------------------------------------------------------- world 2
+  {
+    id: 'glacier',
+    name: 'קרחון הגלידה',
+    desc: 'פניות ארוכות על קרח וגלידה',
+    cost: 350,
+    width: 15,
+    laps: 3,
+    theme: { road: '#9fd6ff', road2: '#86c4f0', ground: '#f4fbff', sky1: '#5fb4ff', sky2: '#e6f6ff', fog: '#eef8ff', wall1: '#ffffff', wall2: '#5fb4ff', decor: ['icetree', 'cone', 'gum', 'lolli2'] },
+    cmds: [
+      ['S', 60], ['coins', 0], ['S', 40], ['T', 120, 45], ['jump'], ['S', 50], ['T', -60, 40], ['S', 40], ['items'], ['T', 150, 50],
+      ['S', 90, 6, 'adj'], ['jump'], ['S', 60, -6], ['T', 90, 40], ['boost'], ['S', 80, 0, 'adj'], ['T', 60, 40], ['coins', 3], ['S', 30],
+    ],
+  },
+  {
+    id: 'gummy',
+    name: "ג'ונגל הגומי",
+    desc: "צ'יקיינים, דובונים וגשר מעל העמק",
+    cost: 450,
+    width: 15,
+    laps: 3,
+    theme: { road: '#9a6bd6', road2: '#8457c2', ground: '#4fbf6a', sky1: '#5ed1a0', sky2: '#f2ffd6', fog: '#e4ffd9', wall1: '#ffe14f', wall2: '#7a3fc0', decor: ['bear', 'tree', 'gum', 'lolli'] },
+    cmds: [
+      ['S', 50, 0, 'adj'], ['coins', 0], ['T', 90, 35], ['T', -45, 32], ['T', 90, 32], ['T', -45, 32], ['S', 40, 8], ['items'], ['S', 40, -8],
+      ['T', 90, 40], ['T', 40, 32], ['T', -80, 32], ['T', 40, 32], ['coins', 0], ['S', 50], ['T', 90, 40], ['boost'], ['S', 40, 0, 'adj'], ['items'], ['T', 90, 35], ['S', 30],
+    ],
+  },
+  {
+    id: 'clouds',
+    name: 'ענני צמר-גפן',
+    desc: 'מסלול בשמיים עם ספירלה ענקית',
+    cost: 600,
+    width: 15,
+    laps: 3,
+    theme: { road: '#ffb3d9', road2: '#ff9ccd', ground: '#ffe6f4', sky1: '#8fd3ff', sky2: '#ffe6f7', fog: '#fff0fa', wall1: '#ffffff', wall2: '#8fd3ff', decor: ['cloud', 'cloud', 'lolli', 'lolli2'], groundDrop: 70 },
+    cmds: [
+      ['S', 60, 0, 'adj'], ['coins', 0], ['T', 90, 40], ['S', 40], ['boost'], ['T', 360, 40, 12], ['items'], ['S', 50], ['T', 90, 45],
+      ['S', 40, -6], ['jump'], ['S', 40, -6], ['T', 90, 40], ['S', 60, 0, 'adj'], ['T', 90, 40], ['coins', 0], ['S', 30],
+    ],
+  },
+  {
+    id: 'factory',
+    name: 'מפעל הסוכריות',
+    desc: 'לופ כפול ומשטחי טורבו בכל מקום',
+    cost: 750,
+    width: 15,
+    laps: 3,
+    theme: { road: '#7d8597', road2: '#6b7385', ground: '#b9bfcc', sky1: '#ff9e5e', sky2: '#ffe0c2', fog: '#ffe6d1', wall1: '#ffd23f', wall2: '#2b2b38', decor: ['chimney', 'cane', 'gum', 'cupcake'] },
+    cmds: [
+      ['S', 50, 0, 'adj'], ['coins', 0], ['S', 15], ['boost'], ['S', 20], ['L', 15, 16], ['L', 15, 16], ['S', 40], ['T', 90, 40], ['boost'], ['S', 50], ['items'],
+      ['T', 90, 35], ['S', 30], ['T', -90, 30], ['T', 90, 30], ['boost'], ['S', 60], ['T', 90, 40], ['S', 40, 0, 'adj'], ['T', 90, 40], ['coins', 0], ['S', 30],
+    ],
+  },
+  {
+    id: 'volcano',
+    name: 'הר הגעש של השוקולד',
+    desc: 'האתגר האחרון: לופ, ספירלה ושלוש קפיצות',
+    cost: 900,
+    width: 14,
+    laps: 2,
+    theme: { road: '#4a2c22', road2: '#3b221a', ground: '#2a1712', sky1: '#1a0d1f', sky2: '#ff6a2b', fog: '#5a2418', wall1: '#ff7a1a', wall2: '#1b1b1b', decor: ['volcano', 'tree', 'cane', 'gum'] },
+    cmds: [
+      ['S', 60], ['coins', 0], ['boost'], ['S', 40], ['L', 16, -17], ['S', 40], ['jump'], ['S', 50], ['T', 120, 45], ['items'], ['S', 40, 8], ['jump'], ['S', 40, -8],
+      ['T', -90, 32], ['T', 90, 32], ['boost'], ['S', 40], ['T', 360, 38, 15], ['S', 40, -7], ['jump'], ['S', 40, -8], ['T', 60, 40], ['items'], ['S', 50, 0, 'adj'],
+      ['T', 90, 45], ['S', 200, 0, 'adj'], ['T', 90, 45], ['coins', 0], ['S', 30],
+    ],
+  },
 ];

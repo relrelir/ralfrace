@@ -10,7 +10,8 @@
     "preview": "vite preview --host",
     "sim": "node tools/sim.js",
     "android:add": "npx cap add android",
-    "android:sync": "npm run build && npx cap sync android"
+    "android:sync": "npm run build && npx cap sync android",
+    "check": "node tools/check-tracks.mjs"
   },
   "repository": {
     "type": "git",

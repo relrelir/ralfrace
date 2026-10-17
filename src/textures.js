@@ -182,3 +182,33 @@ export function bannerTexture(text) {
   g.fillText(text, 256, 52);
   return tex(c, false);
 }
+
+// Paint job on the kart body: base colour + a pattern in the accent colour.
+export function patternTexture(type, base, accent) {
+  const [c, g] = canvas(256, 256);
+  g.fillStyle = base; g.fillRect(0, 0, 256, 256);
+  g.fillStyle = accent; g.strokeStyle = accent;
+  if (type === 'stripes') {
+    for (let x = -256; x < 512; x += 64) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x + 28, 0); g.lineTo(x + 284, 256); g.lineTo(x + 256, 256); g.fill(); }
+  } else if (type === 'dots') {
+    for (let y = 16; y < 256; y += 48) for (let x = (y / 48) % 2 ? 40 : 16; x < 256; x += 48) { g.beginPath(); g.arc(x, y, 12, 0, Math.PI * 2); g.fill(); }
+  } else if (type === 'sprinkles') {
+    for (let i = 0; i < 90; i++) {
+      g.save(); g.translate(Math.random() * 256, Math.random() * 256); g.rotate(Math.random() * Math.PI);
+      g.fillStyle = i % 3 ? SPRINKLE_COLORS[i % SPRINKLE_COLORS.length] : accent;
+      g.fillRect(-9, -3, 18, 6); g.restore();
+    }
+  } else if (type === 'flames') {
+    for (let x = 0; x < 256; x += 64) {
+      g.beginPath(); g.moveTo(x, 256);
+      g.quadraticCurveTo(x + 10, 150, x + 32, 70); g.quadraticCurveTo(x + 40, 150, x + 64, 256);
+      g.fill();
+    }
+  } else if (type === 'checker') {
+    for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) if ((x + y) % 2) g.fillRect(x * 32, y * 32, 32, 32);
+  } else if (type === 'hearts') {
+    g.font = '44px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    for (let y = 28; y < 256; y += 64) for (let x = (y / 64) % 2 ? 60 : 28; x < 256; x += 64) g.fillText('♥', x, y);
+  }
+  return tex(c);
+}

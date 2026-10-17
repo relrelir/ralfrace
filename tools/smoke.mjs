@@ -18,7 +18,7 @@ const steps = (process.env.STEPS || 'race').split(',');
 const track = process.env.TRACK || 'lollipop';
 const shotsAt = (process.env.AT || '6,20').split(',').map(Number);
 for (const mode of steps) {
-  await page.evaluate(() => { window.game.save.ownedTracks = ['lollipop', 'choco', 'cake', 'marsh', 'licorice']; window.game.showMain(); });
+  await page.evaluate(() => { window.game.save.ownedTracks = window.TRACK_IDS || ['lollipop', 'choco', 'cake', 'marsh', 'licorice', 'glacier', 'gummy', 'clouds', 'factory', 'volcano']; window.game.showMain(); });
   await page.click(`[data-act=pick][data-arg=${mode}]`);
   await page.waitForTimeout(300);
   await page.screenshot({ path: `${out}/2-tracks-${mode}.png` });
