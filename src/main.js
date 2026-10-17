@@ -13,11 +13,18 @@ import { Audio } from './audio.js';
 import { loadSave, writeSave, loadGhost, writeGhost } from './save.js';
 import { t, setLang, detectLang, LANGS, isRTL, trackName, trackDesc, partName } from './i18n.js';
 import { portal, onPortal } from './portal.js';
+import { MenuNav } from './menunav.js';
 
 const $ = sel => document.querySelector(sel);
 const MEDAL = ['', '🥉', '🥈', '🥇'];
 const TROPHY = { 1: '🏆', 2: '🥈', 3: '🥉' };
 const WORLD_SIZE = 5;
+const CUP_POINTS = [10, 8, 6, 4, 3, 2];
+const CUP_PRIZE = { 1: 150, 2: 90, 3: 50 };
+const CUPS = [
+  { id: 'sweet', tracks: TRACKS.slice(0, 5).map(tr => tr.id), color: '#ff7ad9' },
+  { id: 'giant', tracks: TRACKS.slice(5, 10).map(tr => tr.id), color: '#7a4fd6' },
+];
 
 // garage categories: save.owned[group] holds what the player has, car[key] what is fitted
 const PARTS = {
@@ -46,6 +53,7 @@ class Game {
     this.race = null;
     this.paused = false;
     this.ui = $('#ui');
+    this.nav = new MenuNav(this);
     this.screen = null;
     this.garageOffset = 0;
     this.inGameplay = false;
@@ -89,8 +97,10 @@ class Game {
       if (this.input.pausePressed() && this.race.state !== 'done') { this.paused ? this.resume() : this.pause(); }
       if (this.input.restartPressed() && this.race.state !== 'done') this.restartRace();
       if (this.race && !this.paused) this.race.update(dt);
+      else if (this.race) this.nav.update(dt, this.input, { paused: true });
       if (this.race) this.race.render(this.renderer, this.w, this.h);
     } else {
+      this.nav.update(dt, this.input);
       this.garage.update(dt);
       this.garage.render(this.renderer, this.w, this.h, this.garageOffset);
     }
@@ -107,6 +117,7 @@ class Game {
       this.click();
       this.actions[b.dataset.act]?.call(this, b.dataset.arg, e);
     }));
+    this.nav?.refresh();
   }
 
   coinBar() { return `<div class="coinbar">🪙 <b>${this.save.coins}</b></div>`; }
@@ -124,6 +135,7 @@ class Game {
       </div>
       <div class="menu">
         <button class="big pink" data-act="pick" data-arg="race">${t('mRace')}</button>
+        <button class="big orange" data-act="cups">${t('mCup')}</button>
         <button class="big blue" data-act="pick" data-arg="time">${t('mTime')}</button>
         <button class="big yellow ${this.isTouch ? 'disabled' : ''}" data-act="pick" data-arg="split" ${this.isTouch ? `title="${t('needKeyboard')}"` : ''}>${t('mSplit')}</button>
         <div class="row">
@@ -141,6 +153,7 @@ class Game {
       gold: medals.filter(m => m === 3).length,
       trophy: Object.values(trophies).filter(p => p === 1).length,
       allTracks: TRACKS.every(tr => trophies[tr.id]),
+      cup: Object.values(this.save.cups).filter(p => p === 1).length,
     };
   }
 
@@ -152,6 +165,7 @@ class Game {
   unlockLabel(u) {
     if (u.need === 'gold') return `🥇×${u.n}`;
     if (u.need === 'trophy') return `🏆×${u.n}`;
+    if (u.need === 'cup') return t('cupLabel', { n: u.n });
     return t('allTracks');
   }
 
@@ -343,6 +357,7 @@ class Game {
     this.persist();
     this.lastRewards = rewards; // a rewarded ad can double this once
     const idx = TRACKS.findIndex(tr => tr.id === res.trackId);
+    const cupHtml = this.cup && res.mode === 'race' ? this.addCupPoints(res) : '';
     const next = TRACKS[idx + 1];
     const nextOwned = next && this.trackOpen(idx + 1);
     const adBtn = rewards && portal.hasRewarded ? `<button class="mid yellow" data-act="doubleCoins">${t('watchAd')}</button>` : '';
@@ -350,16 +365,93 @@ class Game {
       ${this.coinBar()}
       <div class="panel results">
         <h2>${trackName(TRACKS[idx])}</h2>
+        ${this.cup ? `<div class="hint">${t('cupRace', { n: this.cup.idx + 1, of: this.cup.tracks.length })}</div>` : ''}
         ${html}
+        ${cupHtml}
         ${rewards ? `<div class="reward">+${rewards} 🪙</div>` : ''}
         ${adBtn ? `<div class="bottom">${adBtn}</div>` : ''}
-        <div class="bottom">
+        <div class="bottom">${this.cup ? `
+          <button class="mid pink" data-act="cupNext">${this.cup.idx + 1 < this.cup.tracks.length ? t('nextRace') : t('finalStandings')}</button>
+          <button class="mid gray" data-act="menu">${t('menu')}</button>` : `
           <button class="mid pink" data-act="again">${t('again')}</button>
           ${nextOwned ? `<button class="mid blue" data-act="track" data-arg="${next.id}">${t('nextTrack')}</button>` : ''}
-          <button class="mid gray" data-act="menu">${t('menu')}</button>
+          <button class="mid gray" data-act="menu">${t('menu')}</button>`}
         </div>
       </div>`, 'resultscr');
     if (rewards) this.audio.sfx('buy');
+  }
+
+  confirmQuitCup() {
+    if (!confirm(t('cupQuit'))) return false;
+    this.cup = null;
+    return true;
+  }
+
+  // ------------------------------------------------------------ championship
+  cupOpen(cup) { return cup.tracks.every(id => this.trackOpen(TRACKS.findIndex(tr => tr.id === id))); }
+
+  showCups() {
+    this.garageOffset = 0;
+    const cards = CUPS.map(cup => {
+      const open = this.cupOpen(cup);
+      const best = this.save.cups[cup.id];
+      return `<button class="track cupcard ${open ? '' : 'locked'}" data-act="cup" data-arg="${cup.id}" style="--c1:${cup.color};--c2:#ffd23f">
+        <div class="tname">🏆 ${t('cup_' + cup.id)}</div>
+        <div class="tdesc">${cup.tracks.map(id => trackName(TRACKS.find(tr => tr.id === id))).join(' · ')}</div>
+        <div class="meta">${open ? (best ? `${TROPHY[best] || '🎗️'} ${t('place', { n: best })}` : '—') : `🔒 ${t('cupLocked')}`}</div>
+      </button>`;
+    }).join('');
+    this.setScreen(`
+      ${this.coinBar()}
+      <h2>${t('mCup')}</h2>
+      <p class="hint light">${t('cupInfo')}</p>
+      <div class="tracks cups">${cards}</div>
+      <div class="bottom"><button class="mid gray" data-act="back">${t('back')}</button></div>`, 'tracksel');
+  }
+
+  startCup(id) {
+    const cup = CUPS.find(c => c.id === id);
+    this.cup = { id, tracks: cup.tracks, idx: 0, points: {}, seed: Math.floor(Math.random() * 8) };
+    this.mode = 'race';
+    this.startRace(cup.tracks[0]);
+  }
+
+  // adds this race's points and returns the running table
+  addCupPoints(res) {
+    const pts = this.cup.points;
+    for (const s of res.standings) {
+      const e = pts[s.name] ||= { name: s.name, color: s.color, human: s.human >= 0, pts: 0 };
+      e.pts += CUP_POINTS[s.place - 1] || 0;
+      e.last = CUP_POINTS[s.place - 1] || 0;
+    }
+    const rows = Object.values(pts).sort((a, b) => b.pts - a.pts).map((e, i) => `<tr class="${e.human ? 'me' : ''}">
+      <td>${i + 1}</td><td><i class="dot" style="background:${e.color}"></i>${e.name}</td><td class="plus">+${e.last}</td><td><b>${e.pts}</b></td></tr>`).join('');
+    return `<h3>${t('points')}</h3><table class="standings cuptable">${rows}</table>`;
+  }
+
+  showCupEnd() {
+    const cup = this.cup;
+    this.cup = null;
+    const table = Object.values(cup.points).sort((a, b) => b.pts - a.pts);
+    const myPlace = table.findIndex(e => e.human) + 1;
+    const prize = CUP_PRIZE[myPlace] || 0;
+    this.save.coins += prize;
+    const prev = this.save.cups[cup.id];
+    if (!prev || myPlace < prev) this.save.cups[cup.id] = myPlace;
+    this.persist();
+    if (myPlace === 1) { portal.happyTime(); this.audio.sfx('win'); } else this.audio.sfx('finish');
+    const podium = [1, 0, 2].map(i => table[i] && `<div class="step s${i + 1}">
+        <div class="podname">${table[i].name}</div><i class="dot big" style="background:${table[i].color}"></i>
+        <div class="block">${['🥇', '🥈', '🥉'][i]}<b>${table[i].pts}</b></div></div>`).join('');
+    this.setScreen(`
+      ${this.coinBar()}
+      <div class="panel results cupend">
+        <h2>🏆 ${t('cup_' + cup.id)}</h2>
+        <div class="headline">${myPlace === 1 ? t('champion') : t('cupPlace', { n: myPlace })}</div>
+        <div class="podium">${podium}</div>
+        ${prize ? `<div class="reward">+${prize} 🪙</div>` : ''}
+        <div class="bottom"><button class="mid pink" data-act="cups">${t('mCup')}</button><button class="mid gray" data-act="menu">${t('menu')}</button></div>
+      </div>`, 'resultscr');
   }
 
   showPause() {
@@ -382,7 +474,7 @@ class Game {
       trackDef: def, mode: this.mode === 'time' ? 'time' : 'race', players,
       difficulty: this.save.settings.difficulty,
       ghost: this.mode === 'time' ? loadGhost(trackId) : null,
-      seed: Math.floor(Math.random() * 8),
+      seed: this.cup ? this.cup.seed : Math.floor(Math.random() * 8),
     };
     this.lastOpts = opts;
     this.adBreakThen(() => this.enterRace(opts));
@@ -501,7 +593,21 @@ Game.prototype.actions = {
   settings() { this.showSettings(); },
   help() { this.showHelp(); },
   back() { this.garage.setCar(this.save.car); this.showMain(); },
-  menu() { this.showMain(); },
+  menu() {
+    if (this.cup && !this.confirmQuitCup()) return;
+    this.showMain();
+  },
+  cups() { this.showCups(); },
+  cup(id) {
+    const cup = CUPS.find(c => c.id === id);
+    if (!this.cupOpen(cup)) { alert(t('cupLocked')); return; }
+    this.startCup(id);
+  },
+  cupNext() {
+    this.cup.idx++;
+    if (this.cup.idx >= this.cup.tracks.length) { this.showCupEnd(); return; }
+    this.startRace(this.cup.tracks[this.cup.idx]);
+  },
   track(id) {
     const i = TRACKS.findIndex(tr => tr.id === id);
     const def = TRACKS[i];
@@ -529,7 +635,7 @@ Game.prototype.actions = {
     if (!this.save.owned[group].includes(id)) {
       if (info.unlock) {
         if (!this.unlockMet(info.unlock)) {
-          const how = t({ gold: 'howGold', trophy: 'howTrophy', allTracks: 'howAll' }[info.unlock.need], { n: info.unlock.n });
+          const how = t({ gold: 'howGold', trophy: 'howTrophy', allTracks: 'howAll', cup: 'howCup' }[info.unlock.need], { n: info.unlock.n });
           alert(t('unlockBy', { name: partName(group, id, info), how }));
           return;
         }
@@ -588,7 +694,11 @@ Game.prototype.actions = {
   },
   resume() { this.resume(); },
   restart() { this.restartRace(); },
-  quit() { this.leaveRace(); this.showMain(); },
+  quit() {
+    if (this.cup && !this.confirmQuitCup()) return;
+    this.leaveRace();
+    this.showMain();
+  },
 };
 
 window.game = new Game();

@@ -25,6 +25,7 @@ export const TOPPERS = {
   propeller: { name: 'מדחף', cost: 80 },
   horn: { name: 'קרן חד-קרן', cost: 120 },
   crown: { name: 'כתר', cost: 0, unlock: { need: 'trophy', n: 3 } },
+  trophy: { name: 'גביע זהב', cost: 0, unlock: { need: 'cup', n: 1 } },
 };
 
 export const PATTERNS = {
@@ -176,6 +177,24 @@ function buildTopper(type) {
       g.add(gem);
     }
     g.position.y = 0.05;
+    return g;
+  }
+  if (type === 'trophy') {
+    const g = new THREE.Group();
+    const gold = mat('#ffd23f', { shininess: 180, specular: 0xffffff, emissive: '#553300' });
+    const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.12, 0.34, 16, 1, true), gold);
+    cup.material.side = THREE.DoubleSide;
+    cup.position.y = 0.36;
+    const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.16, 8), gold);
+    stem.position.y = 0.12;
+    const base = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.18, 0.06, 14), gold);
+    base.position.y = 0.03;
+    g.add(cup, stem, base);
+    for (const s of [-1, 1]) {
+      const handle = new THREE.Mesh(new THREE.TorusGeometry(0.09, 0.025, 6, 12, Math.PI), gold);
+      handle.position.set(s * 0.27, 0.38, 0); handle.rotation.z = -s * Math.PI / 2;
+      g.add(handle);
+    }
     return g;
   }
   if (type === 'candle') {
