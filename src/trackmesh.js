@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { STEP } from './trackdata.js';
 import * as TX from './textures.js';
+import { t } from './i18n.js';
 
 // Builds every visual for a track: road slab, walls, start gate, pads, ramps,
 // support pillars, ground, sky and instanced candy decorations.
@@ -176,7 +177,7 @@ function buildGate(track, s, hw) {
   const banner = new THREE.Mesh(new THREE.BoxGeometry(hw * 2 + 2.4, 1.8, 0.4), [
     new THREE.MeshLambertMaterial({ color: '#ff4f8b' }), new THREE.MeshLambertMaterial({ color: '#ff4f8b' }),
     new THREE.MeshLambertMaterial({ color: '#ff4f8b' }), new THREE.MeshLambertMaterial({ color: '#ff4f8b' }),
-    new THREE.MeshBasicMaterial({ map: TX.bannerTexture('!סטארט') }), new THREE.MeshBasicMaterial({ map: TX.bannerTexture('!סטארט') }),
+    new THREE.MeshBasicMaterial({ map: TX.bannerTexture(t('start')) }), new THREE.MeshBasicMaterial({ map: TX.bannerTexture(t('start')) }),
   ]);
   banner.position.set(0, 7.2, 0);
   g.add(banner);

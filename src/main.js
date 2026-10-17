@@ -11,6 +11,8 @@ import { GarageScene } from './garage.js';
 import { Input, createTouchControls, resetTouch } from './input.js';
 import { Audio } from './audio.js';
 import { loadSave, writeSave, loadGhost, writeGhost } from './save.js';
+import { t, setLang, detectLang, LANGS, isRTL, trackName, trackDesc, partName } from './i18n.js';
+import { portal, onPortal } from './portal.js';
 
 const $ = sel => document.querySelector(sel);
 const MEDAL = ['', '🥉', '🥈', '🥇'];
@@ -46,6 +48,7 @@ class Game {
     this.ui = $('#ui');
     this.screen = null;
     this.garageOffset = 0;
+    this.inGameplay = false;
 
     window.addEventListener('resize', () => this.resize());
     this.resize();
@@ -55,9 +58,11 @@ class Game {
     window.addEventListener('keydown', unlock, { once: false });
     document.addEventListener('visibilitychange', () => { if (document.hidden && this.race && !this.paused) this.pause(); });
 
+    setLang(detectLang(this.save.settings.lang));
     this.showMain();
     this.last = performance.now();
-    this.renderer.setAnimationLoop(t => this.frame(t));
+    this.renderer.setAnimationLoop(now => this.frame(now));
+    portal.init().then(() => portal.loadingDone());
   }
 
   applyQuality() {
@@ -108,23 +113,23 @@ class Game {
 
   // ------------------------------------------------------------ screens
   showMain() {
-    this.garageOffset = this.w > 760 ? this.w * 0.2 : 0;
+    this.garageOffset = this.w > 760 ? this.w * 0.2 * (isRTL() ? 1 : -1) : 0;
     this.garage.setCar(this.save.car);
     this.audio.playMusic('menu');
     this.setScreen(`
       ${this.coinBar()}
       <div class="title">
-        <h1>מרוץ<br><span>הממתקים</span></h1>
-        <p>🍭 מרוצים מתוקים במהירות מטורפת 🍩</p>
+        <h1>${t('title1')}<br><span>${t('title2')}</span></h1>
+        <p>${t('tagline')}</p>
       </div>
       <div class="menu">
-        <button class="big pink" data-act="pick" data-arg="race">🏁 מרוץ</button>
-        <button class="big blue" data-act="pick" data-arg="time">⏱️ נגד השעון</button>
-        <button class="big yellow ${this.isTouch ? 'disabled' : ''}" data-act="pick" data-arg="split" ${this.isTouch ? 'title="דורש מקלדת"' : ''}>👫 2 שחקנים</button>
+        <button class="big pink" data-act="pick" data-arg="race">${t('mRace')}</button>
+        <button class="big blue" data-act="pick" data-arg="time">${t('mTime')}</button>
+        <button class="big yellow ${this.isTouch ? 'disabled' : ''}" data-act="pick" data-arg="split" ${this.isTouch ? `title="${t('needKeyboard')}"` : ''}>${t('mSplit')}</button>
         <div class="row">
-          <button class="mid green" data-act="garage">🛠️ המוסך</button>
-          <button class="mid purple" data-act="settings">⚙️ הגדרות</button>
-          <button class="mid gray" data-act="help">❔ איך משחקים</button>
+          <button class="mid green" data-act="garage">${t('mGarage')}</button>
+          <button class="mid purple" data-act="settings">${t('mSettings')}</button>
+          <button class="mid gray" data-act="help">${t('mHelp')}</button>
         </div>
       </div>`, 'main');
   }
@@ -135,7 +140,7 @@ class Game {
     return {
       gold: medals.filter(m => m === 3).length,
       trophy: Object.values(trophies).filter(p => p === 1).length,
-      allTracks: TRACKS.every(t => trophies[t.id]),
+      allTracks: TRACKS.every(tr => trophies[tr.id]),
     };
   }
 
@@ -147,13 +152,13 @@ class Game {
   unlockLabel(u) {
     if (u.need === 'gold') return `🥇×${u.n}`;
     if (u.need === 'trophy') return `🏆×${u.n}`;
-    return '🏁 כל המסלולים';
+    return t('allTracks');
   }
 
   // a track opens when bought, or for free after a podium on the track before it
   trackOpen(i) {
-    const t = TRACKS[i];
-    if (this.save.ownedTracks.includes(t.id)) return true;
+    const tr = TRACKS[i];
+    if (this.save.ownedTracks.includes(tr.id)) return true;
     const prev = TRACKS[i - 1];
     return !!prev && this.save.trophies[prev.id] <= 3;
   }
@@ -161,33 +166,33 @@ class Game {
   showTracks(mode) {
     this.mode = mode;
     this.garageOffset = 0;
-    const card = (t, i) => {
+    const card = (tr, i) => {
       const owned = this.trackOpen(i);
-      const medal = this.save.medals[t.id] || 0;
-      const trophy = this.save.trophies[t.id];
-      const best = this.save.bestTimes[t.id];
+      const medal = this.save.medals[tr.id] || 0;
+      const trophy = this.save.trophies[tr.id];
+      const best = this.save.bestTimes[tr.id];
       const extra = mode === 'time'
         ? `<div class="meta">${MEDAL[medal] || '—'} ${best ? formatTime(best) : ''}</div>`
-        : `<div class="meta">${trophy ? (TROPHY[trophy] || '🎗️') + ' מקום ' + trophy : '—'}</div>`;
-      const lock = `<div class="lock">🔒 ${t.cost} 🪙${i > 0 ? `<small>או מקום 1–3 ב"${TRACKS[i - 1].name}"</small>` : ''}</div>`;
-      return `<button class="track ${owned ? '' : 'locked'}" data-act="track" data-arg="${t.id}" style="--c1:${t.theme.sky1};--c2:${t.theme.road}">
+        : `<div class="meta">${trophy ? (TROPHY[trophy] || '🎗️') + ' ' + t('place', { n: trophy }) : '—'}</div>`;
+      const lock = `<div class="lock">🔒 ${tr.cost} 🪙${i > 0 ? `<small>${t('orPodium', { track: trackName(TRACKS[i - 1]) })}</small>` : ''}</div>`;
+      return `<button class="track ${owned ? '' : 'locked'}" data-act="track" data-arg="${tr.id}" style="--c1:${tr.theme.sky1};--c2:${tr.theme.road}">
         <div class="tnum">${i + 1}</div>
-        <div class="tname">${t.name}</div>
-        <div class="tdesc">${t.desc}</div>
+        <div class="tname">${trackName(tr)}</div>
+        <div class="tdesc">${trackDesc(tr)}</div>
         ${owned ? extra : lock}
       </button>`;
     };
     let worlds = '';
     for (let w = 0; w * WORLD_SIZE < TRACKS.length; w++) {
       const list = TRACKS.slice(w * WORLD_SIZE, (w + 1) * WORLD_SIZE);
-      worlds += `<h3 class="world">🌍 עולם ${w + 1}</h3><div class="tracks">${list.map((t, k) => card(t, w * WORLD_SIZE + k)).join('')}</div>`;
+      worlds += `<h3 class="world">${t('world', { n: w + 1 })}</h3><div class="tracks">${list.map((tr, k) => card(tr, w * WORLD_SIZE + k)).join('')}</div>`;
     }
-    const title = { race: '🏁 מרוץ', time: '⏱️ נגד השעון', split: '👫 2 שחקנים' }[mode];
+    const title = t({ race: 'mRace', time: 'mTime', split: 'mSplit' }[mode]);
     this.setScreen(`
       ${this.coinBar()}
-      <h2>${title} – בחרו מסלול</h2>
+      <h2>${title} – ${t('chooseTrack')}</h2>
       ${worlds}
-      <div class="bottom"><button class="mid gray" data-act="back">→ חזרה</button></div>`, 'tracksel');
+      <div class="bottom"><button class="mid gray" data-act="back">${t('back')}</button></div>`, 'tracksel');
   }
 
   showGarage(player = 0) {
@@ -196,45 +201,45 @@ class Game {
     const tab = this.garageTab;
     const car = player === 0 ? this.save.car : this.save.car2;
     this.garage.setCar(car);
-    this.garageOffset = this.w > 700 ? -this.w * 0.22 : 0;
+    this.garageOffset = this.w > 700 ? -this.w * 0.22 * (isRTL() ? 1 : -1) : 0;
     const owned = this.save.owned;
     const opts = group => {
       const { key, list } = PARTS[group];
       return `<div class="opts">${Object.entries(list).map(([id, info]) => {
         const have = owned[group].includes(id);
-        const price = info.unlock ? (this.unlockMet(info.unlock) ? '✨ נפתח!' : `🔒 ${this.unlockLabel(info.unlock)}`) : `🔒 ${info.cost} 🪙`;
+        const price = info.unlock ? (this.unlockMet(info.unlock) ? t('unlocked') : `🔒 ${this.unlockLabel(info.unlock)}`) : `🔒 ${info.cost} 🪙`;
         const swatch = info.colors ? `<span class="trailsw">${info.colors.map(c => `<i style="background:${c}"></i>`).join('')}</span>` : '';
         return `<button class="opt ${car[key] === id ? 'sel' : ''} ${have ? '' : 'locked'}" data-act="part" data-arg="${group}:${id}">
-          ${swatch}${info.name}${have ? '' : `<small>${price}</small>`}</button>`;
+          ${swatch}${partName(group, id, info)}${have ? '' : `<small>${price}</small>`}</button>`;
       }).join('')}</div>`;
     };
-    const swatches = key => `<div class="swatches">${COLORS.map(c => `<button class="sw ${car[key] === c ? 'sel' : ''}" style="background:${c}" data-act="color" data-arg="${key}:${c}" aria-label="צבע"></button>`).join('')}</div>`;
+    const swatches = key => `<div class="swatches">${COLORS.map(c => `<button class="sw ${car[key] === c ? 'sel' : ''}" style="background:${c}" data-act="color" data-arg="${key}:${c}" aria-label="${t('colorLabel')}"></button>`).join('')}</div>`;
     const st = BODIES[car.body];
     const bar = (v, min, max) => `<i style="width:${Math.round(15 + 85 * (v - min) / (max - min))}%"></i>`;
-    const tabs = [['body', '🏎️ מכונית'], ['wheels', '🛞 גלגלים'], ['topper', '👑 קישוט'], ['paint', '🎨 צבע'], ['fx', '✨ אפקטים']];
+    const tabs = [['body', t('tabBody')], ['wheels', t('tabWheels')], ['topper', t('tabTopper')], ['paint', t('tabPaint')], ['fx', t('tabFx')]];
     const content = {
       body: `${opts('bodies')}
         <div class="stats">
-          <div>מהירות <span class="bar">${bar(st.maxSpeed, 43, 51)}</span></div>
-          <div>תאוצה <span class="bar">${bar(st.accel, 19, 32)}</span></div>
-          <div>שליטה <span class="bar">${bar(st.handling, 2.0, 2.8)}</span></div>
+          <div>${t('speed')} <span class="bar">${bar(st.maxSpeed, 43, 51)}</span></div>
+          <div>${t('accel')} <span class="bar">${bar(st.accel, 19, 32)}</span></div>
+          <div>${t('handling')} <span class="bar">${bar(st.handling, 2.0, 2.8)}</span></div>
         </div>`,
       wheels: opts('wheels'),
       topper: opts('toppers'),
-      paint: `<h3>צבע ראשי</h3>${swatches('color')}<h3>צבע משני</h3>${swatches('accent')}<h3>דוגמה</h3>${opts('patterns')}<h3>גימור</h3>${opts('finishes')}`,
-      fx: `<h3>שובל טורבו</h3>${opts('trails')}`,
+      paint: `<h3>${t('colorMain')}</h3>${swatches('color')}<h3>${t('colorAccent')}</h3>${swatches('accent')}<h3>${t('pattern')}</h3>${opts('patterns')}<h3>${t('finish')}</h3>${opts('finishes')}`,
+      fx: `<h3>${t('trail')}</h3>${opts('trails')}`,
     }[tab];
     this.setScreen(`
       ${this.coinBar()}
       <div class="garage">
-        <h2>🛠️ המוסך</h2>
+        <h2>${t('garage')}</h2>
         <div class="tabs">
-          <button class="${player === 0 ? 'sel' : ''}" data-act="gtab" data-arg="0">שחקן 1</button>
-          <button class="${player === 1 ? 'sel' : ''}" data-act="gtab" data-arg="1">שחקן 2</button>
+          <button class="${player === 0 ? 'sel' : ''}" data-act="gtab" data-arg="0">${t('player1')}</button>
+          <button class="${player === 1 ? 'sel' : ''}" data-act="gtab" data-arg="1">${t('player2')}</button>
         </div>
         <div class="gtabs">${tabs.map(([id, label]) => `<button class="${tab === id ? 'sel' : ''}" data-act="gsection" data-arg="${id}">${label}</button>`).join('')}</div>
         <div class="gcontent">${content}</div>
-        <div class="bottom"><button class="mid green" data-act="back">✔ סיום</button></div>
+        <div class="bottom"><button class="mid green" data-act="back">${t('done')}</button></div>
       </div>`, 'garagescr');
   }
 
@@ -243,23 +248,25 @@ class Game {
     const seg = (key, vals) => `<div class="seg">${vals.map(([v, l]) => `<button class="${s[key] === v ? 'sel' : ''}" data-act="set" data-arg="${key}:${v}">${l}</button>`).join('')}</div>`;
     this.setScreen(`
       <div class="panel">
-        <h2>⚙️ הגדרות</h2>
-        <label>שם השחקן <input id="pname" maxlength="12" value="${this.save.name.replace(/"/g, '')}"></label>
-        <h3>רמת קושי</h3>
-        ${seg('difficulty', [['easy', '😊 קל'], ['normal', '😎 רגיל'], ['hard', '🔥 קשה']])}
-        <p class="hint">בקל – ההגה עוזר להישאר על המסלול והיריבים איטיים יותר.</p>
-        <h3>גז אוטומטי (מסך מגע)</h3>
-        ${seg('autoGas', [[true, 'פועל'], [false, 'כבוי']])}
-        <h3>גרפיקה</h3>
-        ${seg('quality', [['low', 'חסכונית'], ['auto', 'רגילה'], ['high', 'גבוהה']])}
-        <h3>מוזיקה</h3><input type="range" id="vmusic" min="0" max="1" step="0.05" value="${s.music}">
-        <h3>צלילים</h3><input type="range" id="vsfx" min="0" max="1" step="0.05" value="${s.sfx}">
+        <h2>${t('settings')}</h2>
+        <label>${t('playerName')} <input id="pname" maxlength="12" value="${this.save.name.replace(/"/g, '')}"></label>
+        <h3>${t('difficulty')}</h3>
+        ${seg('difficulty', [['easy', t('easy')], ['normal', t('normal')], ['hard', t('hard')]])}
+        <p class="hint">${t('easyHint')}</p>
+        <h3>${t('autoGas')}</h3>
+        ${seg('autoGas', [[true, t('on')], [false, t('off')]])}
+        <h3>${t('graphics')}</h3>
+        ${seg('quality', [['low', t('gLow')], ['auto', t('gAuto')], ['high', t('gHigh')]])}
+        <h3>${t('language')}</h3>
+        ${seg('lang', Object.entries(LANGS))}
+        <h3>${t('music')}</h3><input type="range" id="vmusic" min="0" max="1" step="0.05" value="${s.music}">
+        <h3>${t('sfx')}</h3><input type="range" id="vsfx" min="0" max="1" step="0.05" value="${s.sfx}">
         <div class="bottom">
-          <button class="mid gray" data-act="reset">🗑️ איפוס התקדמות</button>
-          <button class="mid green" data-act="back">✔ שמירה</button>
+          <button class="mid gray" data-act="reset">${t('reset')}</button>
+          <button class="mid green" data-act="back">${t('save')}</button>
         </div>
       </div>`, 'settings');
-    $('#pname').addEventListener('input', e => { this.save.name = e.target.value.trim() || 'שחקן'; this.persist(); });
+    $('#pname').addEventListener('input', e => { this.save.name = e.target.value.trim(); this.persist(); });
     $('#vmusic').addEventListener('input', e => { s.music = +e.target.value; this.audio.setVolumes(s.music, s.sfx); this.persist(); });
     $('#vsfx').addEventListener('input', e => { s.sfx = +e.target.value; this.audio.setVolumes(s.music, s.sfx); this.audio.sfx('coin'); this.persist(); });
   }
@@ -267,24 +274,24 @@ class Game {
   showHelp() {
     this.setScreen(`
       <div class="panel help">
-        <h2>❔ איך משחקים</h2>
+        <h2>${t('help')}</h2>
         <table>
-          <tr><th></th><th>שחקן 1</th><th>שחקן 2</th></tr>
-          <tr><td>גז / ברקס</td><td>W / S</td><td>↑ / ↓</td></tr>
-          <tr><td>היגוי</td><td>A / D</td><td>← / →</td></tr>
-          <tr><td>דריפט</td><td>Shift שמאלי</td><td>Shift ימני</td></tr>
-          <tr><td>שימוש בחפץ</td><td>רווח</td><td>Enter</td></tr>
+          <tr><th></th><th>${t('player1')}</th><th>${t('player2')}</th></tr>
+          <tr><td>${t('gasBrake')}</td><td>W / S</td><td>↑ / ↓</td></tr>
+          <tr><td>${t('steer')}</td><td>A / D</td><td>← / →</td></tr>
+          <tr><td>${t('drift')}</td><td>${t('leftShift')}</td><td>${t('rightShift')}</td></tr>
+          <tr><td>${t('useItem')}</td><td>${t('space')}</td><td>Enter</td></tr>
         </table>
-        <p>במשחק לבד אפשר להשתמש גם בחצים, וגם בשלט (ג'ויסטיק). <b>Esc</b> – הפסקה, <b>R</b> – התחלה מחדש מהירה.</p>
+        <p>${t('helpSolo')}</p>
         <ul>
-          <li>🌀 <b>דריפט:</b> החזיקו דריפט תוך כדי פנייה. כשהניצוצות כחולים או כתומים – שחררו לקבלת טורבו!</li>
-          <li>🟧 <b>משטחי טורבו</b> על הכביש נותנים דחיפה. <b>רמפות</b> מעיפות אתכם לאוויר.</li>
-          <li>🎁 <b>קופסאות הפתעה:</b> 🚀 טורבו · 🫧 מגן מסטיק · 🍬 מלכודת טופי (נזרקת אחורה) · 🍭 טיל סוכריה (רודף אחרי מי שלפניכם)</li>
-          <li>🪙 <b>מטבעות:</b> אספו במרוצים וקנו מסלולים, מכוניות וגלגלים במוסך.</li>
-          <li>⏱️ <b>נגד השעון:</b> הקפה אחת נגד רוח הרפאים של השיא שלכם. השיגו 🥉🥈🥇!</li>
-          <li>🙌 <b>זינוק טורבו:</b> לחצו גז בדיוק כשמופיע 1 בספירה.</li>
+          <li>${t('helpDrift')}</li>
+          <li>${t('helpPads')}</li>
+          <li>${t('helpItems')}</li>
+          <li>${t('helpCoins')}</li>
+          <li>${t('helpTime')}</li>
+          <li>${t('helpStart')}</li>
         </ul>
-        <div class="bottom"><button class="mid green" data-act="back">!הבנתי</button></div>
+        <div class="bottom"><button class="mid green" data-act="back">${t('gotIt')}</button></div>
       </div>`, 'settings');
   }
 
@@ -293,21 +300,22 @@ class Game {
     let rewards = 0;
     let html = '';
     if (res.mode === 'time') {
-      const t = res.time;
+      const time = res.time;
       const [b, s, g] = res.medals;
-      const medal = t <= g ? 3 : t <= s ? 2 : t <= b ? 1 : 0;
+      const medal = time <= g ? 3 : time <= s ? 2 : time <= b ? 1 : 0;
       const prevMedal = this.save.medals[res.trackId] || 0;
       const prevBest = this.save.bestTimes[res.trackId];
-      const record = !prevBest || t < prevBest;
-      if (record) { this.save.bestTimes[res.trackId] = t; writeGhost(res.trackId, res.ghost); }
+      const record = !prevBest || time < prevBest;
+      if (record) { this.save.bestTimes[res.trackId] = time; writeGhost(res.trackId, res.ghost); }
       if (medal > prevMedal) {
         const pay = [0, 10, 20, 40];
         for (let m = prevMedal + 1; m <= medal; m++) rewards += pay[m];
         this.save.medals[res.trackId] = medal;
       }
+      if (record || medal === 3) portal.happyTime();
       html = `
-        <div class="bigtime">${formatTime(t)}</div>
-        ${record ? '<div class="record">!שיא חדש 🎉</div>' : `<div class="hint">השיא שלך: ${formatTime(prevBest)}</div>`}
+        <div class="bigtime">${formatTime(time)}</div>
+        ${record ? `<div class="record">${t('newRecord')}</div>` : `<div class="hint">${t('yourBest', { time: formatTime(prevBest) })}</div>`}
         <div class="medals">
           <div class="${medal >= 1 ? 'got' : ''}">🥉<small>${formatTime(b)}</small></div>
           <div class="${medal >= 2 ? 'got' : ''}">🥈<small>${formatTime(s)}</small></div>
@@ -326,25 +334,29 @@ class Game {
         <td>${s.place}</td><td><i class="dot" style="background:${s.color}"></i>${s.name}</td><td><bdi dir="ltr">${s.estimated ? '~' : ''}${formatTime(s.time)}</bdi></td></tr>`).join('');
       const top = humans[0];
       const headline = res.split
-        ? `${(humans.find(h => h.place === Math.min(...humans.map(x => x.place))) || {}).name} !ניצח`
-        : top.place === 1 ? '🏆 !ניצחון' : top.place <= 3 ? `!מקום ${top.place} – כל הכבוד` : `מקום ${top.place}`;
+        ? t('wins', { name: (humans.find(h => h.place === Math.min(...humans.map(x => x.place))) || {}).name })
+        : top.place === 1 ? t('victory') : top.place <= 3 ? t('podium', { n: top.place }) : t('place', { n: top.place });
+      if (!res.split && top.place === 1) portal.happyTime();
       html = `<div class="headline">${headline}</div><table class="standings">${rows}</table>`;
     }
     this.save.coins += rewards;
     this.persist();
-    const idx = TRACKS.findIndex(t => t.id === res.trackId);
+    this.lastRewards = rewards; // a rewarded ad can double this once
+    const idx = TRACKS.findIndex(tr => tr.id === res.trackId);
     const next = TRACKS[idx + 1];
     const nextOwned = next && this.trackOpen(idx + 1);
+    const adBtn = rewards && portal.hasRewarded ? `<button class="mid yellow" data-act="doubleCoins">${t('watchAd')}</button>` : '';
     this.setScreen(`
       ${this.coinBar()}
       <div class="panel results">
-        <h2>${TRACKS[idx].name}</h2>
+        <h2>${trackName(TRACKS[idx])}</h2>
         ${html}
         ${rewards ? `<div class="reward">+${rewards} 🪙</div>` : ''}
+        ${adBtn ? `<div class="bottom">${adBtn}</div>` : ''}
         <div class="bottom">
-          <button class="mid pink" data-act="again">↻ שוב</button>
-          ${nextOwned ? `<button class="mid blue" data-act="track" data-arg="${next.id}">המסלול הבא ←</button>` : ''}
-          <button class="mid gray" data-act="menu">תפריט</button>
+          <button class="mid pink" data-act="again">${t('again')}</button>
+          ${nextOwned ? `<button class="mid blue" data-act="track" data-arg="${next.id}">${t('nextTrack')}</button>` : ''}
+          <button class="mid gray" data-act="menu">${t('menu')}</button>
         </div>
       </div>`, 'resultscr');
     if (rewards) this.audio.sfx('buy');
@@ -353,22 +365,19 @@ class Game {
   showPause() {
     this.setScreen(`
       <div class="panel pause">
-        <h2>⏸️ הפסקה</h2>
-        <button class="big green" data-act="resume">▶ המשך</button>
-        <button class="big blue" data-act="restart">↻ התחלה מחדש</button>
-        <button class="big gray" data-act="quit">🏠 יציאה לתפריט</button>
+        <h2>${t('pause')}</h2>
+        <button class="big green" data-act="resume">${t('resume')}</button>
+        <button class="big blue" data-act="restart">${t('restart')}</button>
+        <button class="big gray" data-act="quit">${t('quit')}</button>
       </div>`, 'pausescr');
   }
 
   // ------------------------------------------------------------ race flow
   startRace(trackId) {
-    const def = TRACKS.find(t => t.id === trackId);
+    const def = TRACKS.find(tr => tr.id === trackId);
     this.lastTrack = trackId;
-    const players = [{ name: this.save.name, car: this.save.car }];
-    if (this.mode === 'split') {
-      if (players[0].name === 'שחקן') players[0].name = 'שחקן 1';
-      players.push({ name: 'שחקן 2', car: this.save.car2 });
-    }
+    const players = [{ name: this.save.name || t(this.mode === 'split' ? 'player1' : 'player'), car: this.save.car }];
+    if (this.mode === 'split') players.push({ name: t('player2'), car: this.save.car2 });
     const opts = {
       trackDef: def, mode: this.mode === 'time' ? 'time' : 'race', players,
       difficulty: this.save.settings.difficulty,
@@ -376,7 +385,28 @@ class Game {
       seed: Math.floor(Math.random() * 8),
     };
     this.lastOpts = opts;
-    this.enterRace(opts);
+    this.adBreakThen(() => this.enterRace(opts));
+  }
+
+  // portals may show an ad between races; the game and its sound stay paused meanwhile
+  async adBreakThen(start) {
+    if (onPortal) {
+      if (this.adRunning) return;
+      this.adRunning = true;
+      this.setGameplay(false);
+      if (this.race) this.paused = true;
+      this.audio.pauseAll(true);
+      await portal.commercialBreak();
+      this.audio.pauseAll(false);
+      this.adRunning = false;
+    }
+    start();
+  }
+
+  setGameplay(on) {
+    if (on === this.inGameplay) return;
+    this.inGameplay = on;
+    if (on) portal.gameplayStart(); else portal.gameplayStop();
   }
 
   enterRace(opts) {
@@ -400,7 +430,8 @@ class Game {
     pauseBtn.textContent = '⏸';
     pauseBtn.addEventListener('click', () => this.pause());
     this.ui.appendChild(pauseBtn);
-    if (this.isTouch) {
+    this.setGameplay(true);
+    if (this.isTouch && !onPortal) {
       try { document.documentElement.requestFullscreen?.().catch(() => {}); } catch { /* not allowed */ }
       try { screen.orientation?.lock?.('landscape').catch(() => {}); } catch { /* not supported */ }
     }
@@ -410,13 +441,14 @@ class Game {
     if (!this.lastOpts) return;
     // reload ghost so a fresh record shows up immediately
     if (this.lastOpts.mode === 'time') this.lastOpts.ghost = loadGhost(this.lastOpts.trackDef.id);
-    this.enterRace(this.lastOpts);
+    this.adBreakThen(() => this.enterRace(this.lastOpts));
   }
 
   pause() {
     if (!this.race || this.race.state === 'done') return;
     this.paused = true;
     this.audio.pauseAll(true);
+    this.setGameplay(false);
     this.showPause();
   }
 
@@ -429,9 +461,11 @@ class Game {
     pauseBtn.textContent = '⏸';
     pauseBtn.addEventListener('click', () => this.pause());
     this.ui.appendChild(pauseBtn);
+    this.setGameplay(true);
   }
 
   leaveRace() {
+    this.setGameplay(false);
     if (this.race) this.race.dispose();
     this.race = null;
     this.paused = false;
@@ -459,7 +493,7 @@ class Game {
 
 Game.prototype.actions = {
   pick(mode) {
-    if (mode === 'split' && this.isTouch) { alert('מצב 2 שחקנים דורש מקלדת (מחשב)'); return; }
+    if (mode === 'split' && this.isTouch) { alert(t('needKeyboard')); return; }
     this.showTracks(mode);
   },
   garage() { this.showGarage(0); },
@@ -469,11 +503,11 @@ Game.prototype.actions = {
   back() { this.garage.setCar(this.save.car); this.showMain(); },
   menu() { this.showMain(); },
   track(id) {
-    const i = TRACKS.findIndex(t => t.id === id);
+    const i = TRACKS.findIndex(tr => tr.id === id);
     const def = TRACKS[i];
     if (!this.trackOpen(i)) {
       if (this.save.coins >= def.cost) {
-        if (confirm(`לפתוח את "${def.name}" ב-${def.cost} מטבעות?`)) {
+        if (confirm(t('buyTrack', { name: trackName(def), cost: def.cost }))) {
           this.save.coins -= def.cost;
           this.save.ownedTracks.push(id);
           this.persist();
@@ -481,7 +515,7 @@ Game.prototype.actions = {
           this.showTracks(this.mode);
         }
       } else {
-        alert(`צריך ${def.cost} מטבעות כדי לפתוח את המסלול (יש לך ${this.save.coins}).\nאו: סיימו במקום 1–3 ב"${TRACKS[i - 1].name}" והוא ייפתח בחינם!`);
+        alert(t('needTrackCoins', { cost: def.cost, have: this.save.coins, prev: trackName(TRACKS[i - 1]) }));
       }
       return;
     }
@@ -495,14 +529,14 @@ Game.prototype.actions = {
     if (!this.save.owned[group].includes(id)) {
       if (info.unlock) {
         if (!this.unlockMet(info.unlock)) {
-          const how = { gold: `השיגו ${info.unlock.n} מדליות זהב 🥇 במצב נגד השעון`, trophy: `נצחו (מקום 1 🏆) ב-${info.unlock.n} מסלולים שונים`, allTracks: 'סיימו מרוץ בכל המסלולים' }[info.unlock.need];
-          alert(`"${info.name}" נפתח בהישג:\n${how}`);
+          const how = t({ gold: 'howGold', trophy: 'howTrophy', allTracks: 'howAll' }[info.unlock.need], { n: info.unlock.n });
+          alert(t('unlockBy', { name: partName(group, id, info), how }));
           return;
         }
         this.audio.sfx('win');
       } else {
-        if (this.save.coins < info.cost) { alert(`צריך ${info.cost} מטבעות. יש לך ${this.save.coins}.`); return; }
-        if (!confirm(`לקנות "${info.name}" ב-${info.cost} מטבעות?`)) return;
+        if (this.save.coins < info.cost) { alert(t('needCoins', { cost: info.cost, have: this.save.coins })); return; }
+        if (!confirm(t('buyPart', { name: partName(group, id, info), cost: info.cost }))) return;
         this.save.coins -= info.cost;
         this.audio.sfx('buy');
       }
@@ -525,16 +559,33 @@ Game.prototype.actions = {
     const v = raw === 'true' ? true : raw === 'false' ? false : raw;
     this.save.settings[key] = v;
     if (key === 'quality') { this.applyQuality(); this.resize(); }
+    if (key === 'lang') setLang(v);
     this.persist();
     this.showSettings();
   },
   reset() {
-    if (!confirm('למחוק את כל ההתקדמות, המטבעות והשיאים?')) return;
+    if (!confirm(t('resetConfirm'))) return;
     localStorage.clear();
     this.save = loadSave();
     this.showMain();
   },
   again() { this.restartRace(); },
+  async doubleCoins(_, e) {
+    const btn = e.currentTarget;
+    if (!this.lastRewards || btn.disabled) return;
+    btn.disabled = true;
+    this.audio.pauseAll(true);
+    const ok = await portal.rewardedBreak();
+    this.audio.pauseAll(false);
+    if (!ok || !this.lastRewards) { btn.disabled = false; return; }
+    this.save.coins += this.lastRewards;
+    this.lastRewards = 0;
+    this.persist();
+    this.audio.sfx('buy');
+    btn.textContent = t('doubled');
+    const bar = this.ui.querySelector('.coinbar b');
+    if (bar) bar.textContent = this.save.coins;
+  },
   resume() { this.resume(); },
   restart() { this.restartRace(); },
   quit() { this.leaveRace(); this.showMain(); },
@@ -546,6 +597,6 @@ const native = window.Capacitor?.isNativePlatform?.();
 if (native) {
   // Android app: hide the status bar for a full-screen game
   import('@capacitor/status-bar').then(({ StatusBar }) => StatusBar.hide()).catch(() => {});
-} else if ('serviceWorker' in navigator && location.protocol === 'https:') {
+} else if (!onPortal && 'serviceWorker' in navigator && location.protocol === 'https:') {
   navigator.serviceWorker.register('./sw.js').catch(() => {});
 }

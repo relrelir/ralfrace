@@ -7,6 +7,7 @@ import { buildCar, makeGhost, COLORS, TRAILS } from './carmodel.js';
 import { ItemManager, ITEM_INFO } from './items.js';
 import { Particles } from './particles.js';
 import { shadowTexture } from './textures.js';
+import { t, aiNames } from './i18n.js';
 
 const DIFF = {
   easy: { aiMul: 0.8, assist: 0.7 },
@@ -14,7 +15,6 @@ const DIFF = {
   hard: { aiMul: 0.98, assist: 0.15 },
 };
 
-const AI_NAMES = ['מנטה', 'סוכריון', 'קרמלה', 'שוקו', 'מרשי', 'טופי', 'לקריצה', 'גומי'];
 const AI_BODIES = ['kart', 'cupcake', 'cookie', 'donut', 'gummy', 'icecream'];
 const AI_WHEELS = ['donut', 'cookie', 'mint', 'gumball', 'licorice'];
 const AI_PATTERNS = ['none', 'stripes', 'dots', 'sprinkles', 'none', 'checker'];
@@ -87,7 +87,7 @@ export class Race {
         const k = new Kart(this.track, BODIES[body], { dist, x, assist: 0.5 });
         k.baseMul = diff.aiMul * (0.97 + aiCount * 0.012);
         k.speedMul = k.baseMul;
-        const r = this.addRacer(k, car, AI_NAMES[(aiCount + (opts.seed || 0)) % AI_NAMES.length], -1);
+        const r = this.addRacer(k, car, aiNames()[(aiCount + (opts.seed || 0)) % 8], -1);
         r.ai = new AIDriver(k, this.track, (aiCount + 1) / 7);
         aiCount++;
       }
@@ -147,7 +147,7 @@ export class Race {
         </div>
         <div class="itembox"><span></span></div>
         <div class="coins">🪙 <b>0</b></div>
-        <div class="speed"><b>0</b> קמ"ש</div>
+        <div class="speed"><b>0</b> ${t('kmh')}</div>
         <div class="msg"></div>
         <div class="sub"></div>
         ${this.split ? `<div class="pname">${r.name}</div>` : '<canvas class="minimap" width="160" height="160"></canvas>'}`;
@@ -242,12 +242,12 @@ export class Race {
       }
       if (this.countdown <= 0) {
         this.state = 'running';
-        this.hudPanels.forEach((_, i) => this.flash(i, '!סעו', 0.8, 'go'));
+        this.hudPanels.forEach((_, i) => this.flash(i, t('go'), 0.8, 'go'));
         audio.sfx('go');
         for (const r of this.racers) {
           r.kart.frozen = false;
           // rocket start: pressed gas during the "1"
-          if (r.human >= 0 && r.gasHeldAt > 0 && r.gasHeldAt < 1.1) { r.kart.boost = 1.0; r.kart.events.push({ type: 'boost', level: 2 }); this.sub(r.human, '!זינוק טורבו', 1.2, 'good'); }
+          if (r.human >= 0 && r.gasHeldAt > 0 && r.gasHeldAt < 1.1) { r.kart.boost = 1.0; r.kart.events.push({ type: 'boost', level: 2 }); this.sub(r.human, t('rocketStart'), 1.2, 'good'); }
           if (r.ai && Math.random() < 0.4) r.kart.boost = 0.6;
         }
       }
@@ -379,7 +379,7 @@ export class Race {
       if (lap > r.lapShown && lap <= this.laps) {
         r.lapShown = lap;
         r.cpIndex = 0;
-        this.flash(r.human, lap === this.laps ? '!הקפה אחרונה' : `הקפה ${lap}`, 1.5, 'lap');
+        this.flash(r.human, lap === this.laps ? t('lastLap') : t('lap', { n: lap }), 1.5, 'lap');
         this.game.audio.sfx('lap');
       }
     }
@@ -390,7 +390,7 @@ export class Race {
       if (r.human >= 0) {
         k.input.item = false;
         this.game.audio.sfx(r.place === 1 || this.mode === 'time' ? 'win' : 'finish');
-        const msg = this.mode === 'time' ? fmt(k.finishTime) : r.place === 1 ? '!ניצחון' : `מקום ${r.place}`;
+        const msg = this.mode === 'time' ? fmt(k.finishTime) : r.place === 1 ? t('win') : t('place', { n: r.place });
         this.flash(r.human, msg, 10, 'finish');
         this.particles.burst(r.model.position, '#ffd23f', 40, 12);
       }
@@ -418,7 +418,7 @@ export class Race {
       switch (e.type) {
         case 'boost':
           if (mine) audio.sfx(e.level === 3 ? 'boost' : 'miniboost');
-          if (mine && e.level < 3) this.sub(r.human, e.level === 2 ? '!טורבו כתום' : '!טורבו כחול', 1, 'good');
+          if (mine && e.level < 3) this.sub(r.human, e.level === 2 ? t('orangeTurbo') : t('blueTurbo'), 1, 'good');
           break;
         case 'bump': if (mine) audio.sfx('bump'); break;
         case 'jump': if (mine) audio.sfx('jump'); break;
@@ -551,7 +551,7 @@ export class Race {
       const p = this.hudPanels[i], k = r.kart;
       const place = k.finished ? r.place : ranking.indexOf(k) + 1;
       p.pos.textContent = place;
-      p.lap.textContent = this.mode === 'time' ? 'נגד השעון' : `הקפה ${Math.min(this.laps, Math.max(1, r.lapShown))}/${this.laps}`;
+      p.lap.textContent = this.mode === 'time' ? t('timeTrial') : t('lapOf', { n: Math.min(this.laps, Math.max(1, r.lapShown)), of: this.laps });
       p.timer.textContent = fmt(k.finished ? k.finishTime : Math.max(0, this.time));
       p.speed.textContent = Math.round(Math.abs(k.v) * 3.6);
       p.coins.textContent = k.coins;

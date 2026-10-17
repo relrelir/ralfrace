@@ -1,3 +1,5 @@
+import { t } from './i18n.js';
+
 // Keyboard (one or two players), gamepads and on-screen touch controls.
 
 const P1_KEYS = { gas: ['KeyW'], brake: ['KeyS'], left: ['KeyA'], right: ['KeyD'], drift: ['ShiftLeft'], item: ['Space', 'KeyE', 'KeyQ'] };
@@ -94,14 +96,14 @@ export function createTouchControls(input, { autoGas }) {
   root.className = 'touch';
   root.innerHTML = `
     <div class="tpad left">
-      <button data-k="left" aria-label="שמאלה">◀</button>
-      <button data-k="right" aria-label="ימינה">▶</button>
+      <button data-k="left" aria-label="${t('tLeft')}">◀</button>
+      <button data-k="right" aria-label="${t('tRight')}">▶</button>
     </div>
     <div class="tpad right">
-      <button data-k="item" class="small" aria-label="חפץ">🎁</button>
-      <button data-k="drift" class="small" aria-label="דריפט">↯</button>
-      <button data-k="brake" class="small" aria-label="ברקס">⏪</button>
-      ${autoGas ? '' : '<button data-k="gas" aria-label="גז">⏩</button>'}
+      <button data-k="item" class="small" aria-label="${t('tItem')}">🎁</button>
+      <button data-k="drift" class="small" aria-label="${t('tDrift')}">↯</button>
+      <button data-k="brake" class="small" aria-label="${t('tBrake')}">⏪</button>
+      ${autoGas ? '' : `<button data-k="gas" aria-label="${t('tGas')}">⏩</button>`}
     </div>`;
   const t = input.touch;
   t.gas = !!autoGas;
