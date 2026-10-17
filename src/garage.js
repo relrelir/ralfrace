@@ -61,7 +61,10 @@ export class GarageScene {
   update(dt) {
     this.t += dt;
     this.podium.rotation.y += dt * 0.5;
-    if (this.car) for (const w of this.car.userData.wheels) w.rotation.x -= dt * 2;
+    if (this.car) {
+      for (const w of this.car.userData.wheels) w.rotation.x -= dt * 2;
+      if (this.car.userData.spinner) this.car.userData.spinner.rotation.y += dt * 8;
+    }
   }
 
   render(renderer, w, h, offsetX = 0) {

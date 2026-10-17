@@ -5,7 +5,7 @@ import './style.css';
 import * as THREE from 'three';
 import { TRACKS } from './trackdefs.js';
 import { BODIES } from './physics.js';
-import { WHEELS, TOPPERS, COLORS } from './carmodel.js';
+import { WHEELS, TOPPERS, PATTERNS, FINISHES, TRAILS, COLORS } from './carmodel.js';
 import { Race, formatTime } from './race.js';
 import { GarageScene } from './garage.js';
 import { Input, createTouchControls, resetTouch } from './input.js';
@@ -15,6 +15,17 @@ import { loadSave, writeSave, loadGhost, writeGhost } from './save.js';
 const $ = sel => document.querySelector(sel);
 const MEDAL = ['', '🥉', '🥈', '🥇'];
 const TROPHY = { 1: '🏆', 2: '🥈', 3: '🥉' };
+const WORLD_SIZE = 5;
+
+// garage categories: save.owned[group] holds what the player has, car[key] what is fitted
+const PARTS = {
+  bodies: { key: 'body', list: BODIES },
+  wheels: { key: 'wheels', list: WHEELS },
+  toppers: { key: 'topper', list: TOPPERS },
+  patterns: { key: 'pattern', list: PATTERNS },
+  finishes: { key: 'finish', list: FINISHES },
+  trails: { key: 'trail', list: TRAILS },
+};
 
 class Game {
   constructor() {
@@ -118,45 +129,101 @@ class Game {
       </div>`, 'main');
   }
 
+  // achievements that unlock garage items and tracks
+  progress() {
+    const medals = Object.values(this.save.medals), trophies = this.save.trophies;
+    return {
+      gold: medals.filter(m => m === 3).length,
+      trophy: Object.values(trophies).filter(p => p === 1).length,
+      allTracks: TRACKS.every(t => trophies[t.id]),
+    };
+  }
+
+  unlockMet(u) {
+    const p = this.progress();
+    return u.need === 'allTracks' ? p.allTracks : p[u.need] >= u.n;
+  }
+
+  unlockLabel(u) {
+    if (u.need === 'gold') return `🥇×${u.n}`;
+    if (u.need === 'trophy') return `🏆×${u.n}`;
+    return '🏁 כל המסלולים';
+  }
+
+  // a track opens when bought, or for free after a podium on the track before it
+  trackOpen(i) {
+    const t = TRACKS[i];
+    if (this.save.ownedTracks.includes(t.id)) return true;
+    const prev = TRACKS[i - 1];
+    return !!prev && this.save.trophies[prev.id] <= 3;
+  }
+
   showTracks(mode) {
     this.mode = mode;
     this.garageOffset = 0;
-    const cards = TRACKS.map((t, i) => {
-      const owned = this.save.ownedTracks.includes(t.id);
+    const card = (t, i) => {
+      const owned = this.trackOpen(i);
       const medal = this.save.medals[t.id] || 0;
       const trophy = this.save.trophies[t.id];
       const best = this.save.bestTimes[t.id];
       const extra = mode === 'time'
         ? `<div class="meta">${MEDAL[medal] || '—'} ${best ? formatTime(best) : ''}</div>`
         : `<div class="meta">${trophy ? (TROPHY[trophy] || '🎗️') + ' מקום ' + trophy : '—'}</div>`;
+      const lock = `<div class="lock">🔒 ${t.cost} 🪙${i > 0 ? `<small>או מקום 1–3 ב"${TRACKS[i - 1].name}"</small>` : ''}</div>`;
       return `<button class="track ${owned ? '' : 'locked'}" data-act="track" data-arg="${t.id}" style="--c1:${t.theme.sky1};--c2:${t.theme.road}">
         <div class="tnum">${i + 1}</div>
         <div class="tname">${t.name}</div>
         <div class="tdesc">${t.desc}</div>
-        ${owned ? extra : `<div class="lock">🔒 ${t.cost} 🪙</div>`}
+        ${owned ? extra : lock}
       </button>`;
-    }).join('');
+    };
+    let worlds = '';
+    for (let w = 0; w * WORLD_SIZE < TRACKS.length; w++) {
+      const list = TRACKS.slice(w * WORLD_SIZE, (w + 1) * WORLD_SIZE);
+      worlds += `<h3 class="world">🌍 עולם ${w + 1}</h3><div class="tracks">${list.map((t, k) => card(t, w * WORLD_SIZE + k)).join('')}</div>`;
+    }
     const title = { race: '🏁 מרוץ', time: '⏱️ נגד השעון', split: '👫 2 שחקנים' }[mode];
     this.setScreen(`
       ${this.coinBar()}
       <h2>${title} – בחרו מסלול</h2>
-      <div class="tracks">${cards}</div>
+      ${worlds}
       <div class="bottom"><button class="mid gray" data-act="back">→ חזרה</button></div>`, 'tracksel');
   }
 
   showGarage(player = 0) {
     this.garagePlayer = player;
+    this.garageTab ||= 'body';
+    const tab = this.garageTab;
     const car = player === 0 ? this.save.car : this.save.car2;
     this.garage.setCar(car);
     this.garageOffset = this.w > 700 ? -this.w * 0.22 : 0;
     const owned = this.save.owned;
-    const opt = (group, id, info, sel) => {
-      const have = owned[group].includes(id);
-      return `<button class="opt ${sel ? 'sel' : ''} ${have ? '' : 'locked'}" data-act="part" data-arg="${group}:${id}">
-        ${info.name}${have ? '' : `<small>🔒 ${info.cost} 🪙</small>`}</button>`;
+    const opts = group => {
+      const { key, list } = PARTS[group];
+      return `<div class="opts">${Object.entries(list).map(([id, info]) => {
+        const have = owned[group].includes(id);
+        const price = info.unlock ? (this.unlockMet(info.unlock) ? '✨ נפתח!' : `🔒 ${this.unlockLabel(info.unlock)}`) : `🔒 ${info.cost} 🪙`;
+        const swatch = info.colors ? `<span class="trailsw">${info.colors.map(c => `<i style="background:${c}"></i>`).join('')}</span>` : '';
+        return `<button class="opt ${car[key] === id ? 'sel' : ''} ${have ? '' : 'locked'}" data-act="part" data-arg="${group}:${id}">
+          ${swatch}${info.name}${have ? '' : `<small>${price}</small>`}</button>`;
+      }).join('')}</div>`;
     };
+    const swatches = key => `<div class="swatches">${COLORS.map(c => `<button class="sw ${car[key] === c ? 'sel' : ''}" style="background:${c}" data-act="color" data-arg="${key}:${c}" aria-label="צבע"></button>`).join('')}</div>`;
     const st = BODIES[car.body];
-    const bar = (v, min, max) => `<i style="width:${Math.round(20 + 80 * (v - min) / (max - min))}%"></i>`;
+    const bar = (v, min, max) => `<i style="width:${Math.round(15 + 85 * (v - min) / (max - min))}%"></i>`;
+    const tabs = [['body', '🏎️ מכונית'], ['wheels', '🛞 גלגלים'], ['topper', '👑 קישוט'], ['paint', '🎨 צבע'], ['fx', '✨ אפקטים']];
+    const content = {
+      body: `${opts('bodies')}
+        <div class="stats">
+          <div>מהירות <span class="bar">${bar(st.maxSpeed, 43, 51)}</span></div>
+          <div>תאוצה <span class="bar">${bar(st.accel, 19, 32)}</span></div>
+          <div>שליטה <span class="bar">${bar(st.handling, 2.0, 2.8)}</span></div>
+        </div>`,
+      wheels: opts('wheels'),
+      topper: opts('toppers'),
+      paint: `<h3>צבע ראשי</h3>${swatches('color')}<h3>צבע משני</h3>${swatches('accent')}<h3>דוגמה</h3>${opts('patterns')}<h3>גימור</h3>${opts('finishes')}`,
+      fx: `<h3>שובל טורבו</h3>${opts('trails')}`,
+    }[tab];
     this.setScreen(`
       ${this.coinBar()}
       <div class="garage">
@@ -165,21 +232,8 @@ class Game {
           <button class="${player === 0 ? 'sel' : ''}" data-act="gtab" data-arg="0">שחקן 1</button>
           <button class="${player === 1 ? 'sel' : ''}" data-act="gtab" data-arg="1">שחקן 2</button>
         </div>
-        <h3>מכונית</h3>
-        <div class="opts">${Object.entries(BODIES).map(([id, b]) => opt('bodies', id, b, car.body === id)).join('')}</div>
-        <div class="stats">
-          <div>מהירות <span class="bar">${bar(st.maxSpeed, 43, 50)}</span></div>
-          <div>תאוצה <span class="bar">${bar(st.accel, 20, 31)}</span></div>
-          <div>שליטה <span class="bar">${bar(st.handling, 2.1, 2.7)}</span></div>
-        </div>
-        <h3>גלגלים</h3>
-        <div class="opts">${Object.entries(WHEELS).map(([id, b]) => opt('wheels', id, b, car.wheels === id)).join('')}</div>
-        <h3>קישוט</h3>
-        <div class="opts">${Object.entries(TOPPERS).map(([id, b]) => opt('toppers', id, b, car.topper === id)).join('')}</div>
-        <h3>צבע</h3>
-        <div class="swatches">${COLORS.map(c => `<button class="sw ${car.color === c ? 'sel' : ''}" style="background:${c}" data-act="color" data-arg="color:${c}" aria-label="צבע"></button>`).join('')}</div>
-        <h3>צבע משני</h3>
-        <div class="swatches">${COLORS.map(c => `<button class="sw ${car.accent === c ? 'sel' : ''}" style="background:${c}" data-act="color" data-arg="accent:${c}" aria-label="צבע משני"></button>`).join('')}</div>
+        <div class="gtabs">${tabs.map(([id, label]) => `<button class="${tab === id ? 'sel' : ''}" data-act="gsection" data-arg="${id}">${label}</button>`).join('')}</div>
+        <div class="gcontent">${content}</div>
         <div class="bottom"><button class="mid green" data-act="back">✔ סיום</button></div>
       </div>`, 'garagescr');
   }
@@ -280,7 +334,7 @@ class Game {
     this.persist();
     const idx = TRACKS.findIndex(t => t.id === res.trackId);
     const next = TRACKS[idx + 1];
-    const nextOwned = next && this.save.ownedTracks.includes(next.id);
+    const nextOwned = next && this.trackOpen(idx + 1);
     this.setScreen(`
       ${this.coinBar()}
       <div class="panel results">
@@ -415,8 +469,9 @@ Game.prototype.actions = {
   back() { this.garage.setCar(this.save.car); this.showMain(); },
   menu() { this.showMain(); },
   track(id) {
-    const def = TRACKS.find(t => t.id === id);
-    if (!this.save.ownedTracks.includes(id)) {
+    const i = TRACKS.findIndex(t => t.id === id);
+    const def = TRACKS[i];
+    if (!this.trackOpen(i)) {
       if (this.save.coins >= def.cost) {
         if (confirm(`לפתוח את "${def.name}" ב-${def.cost} מטבעות?`)) {
           this.save.coins -= def.cost;
@@ -426,22 +481,32 @@ Game.prototype.actions = {
           this.showTracks(this.mode);
         }
       } else {
-        alert(`צריך ${def.cost} מטבעות כדי לפתוח את המסלול. יש לך ${this.save.coins}. אספו מטבעות במרוצים!`);
+        alert(`צריך ${def.cost} מטבעות כדי לפתוח את המסלול (יש לך ${this.save.coins}).\nאו: סיימו במקום 1–3 ב"${TRACKS[i - 1].name}" והוא ייפתח בחינם!`);
       }
       return;
     }
     this.startRace(id);
   },
+  gsection(id) { this.garageTab = id; this.showGarage(this.garagePlayer); },
   part(arg) {
     const [group, id] = arg.split(':');
-    const key = { bodies: 'body', wheels: 'wheels', toppers: 'topper' }[group];
-    const info = { bodies: BODIES, wheels: WHEELS, toppers: TOPPERS }[group][id];
+    const { key, list } = PARTS[group];
+    const info = list[id];
     if (!this.save.owned[group].includes(id)) {
-      if (this.save.coins < info.cost) { alert(`צריך ${info.cost} מטבעות. יש לך ${this.save.coins}.`); return; }
-      if (!confirm(`לקנות "${info.name}" ב-${info.cost} מטבעות?`)) return;
-      this.save.coins -= info.cost;
+      if (info.unlock) {
+        if (!this.unlockMet(info.unlock)) {
+          const how = { gold: `השיגו ${info.unlock.n} מדליות זהב 🥇 במצב נגד השעון`, trophy: `נצחו (מקום 1 🏆) ב-${info.unlock.n} מסלולים שונים`, allTracks: 'סיימו מרוץ בכל המסלולים' }[info.unlock.need];
+          alert(`"${info.name}" נפתח בהישג:\n${how}`);
+          return;
+        }
+        this.audio.sfx('win');
+      } else {
+        if (this.save.coins < info.cost) { alert(`צריך ${info.cost} מטבעות. יש לך ${this.save.coins}.`); return; }
+        if (!confirm(`לקנות "${info.name}" ב-${info.cost} מטבעות?`)) return;
+        this.save.coins -= info.cost;
+        this.audio.sfx('buy');
+      }
       this.save.owned[group].push(id);
-      this.audio.sfx('buy');
     }
     const car = this.garagePlayer === 0 ? this.save.car : this.save.car2;
     car[key] = id;

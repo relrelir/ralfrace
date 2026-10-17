@@ -3,7 +3,7 @@ import { TrackData, makeFrame } from './trackdata.js';
 import { buildTrackScene } from './trackmesh.js';
 import { Kart, BODIES } from './physics.js';
 import { AIDriver } from './ai.js';
-import { buildCar, makeGhost, COLORS } from './carmodel.js';
+import { buildCar, makeGhost, COLORS, TRAILS } from './carmodel.js';
 import { ItemManager, ITEM_INFO } from './items.js';
 import { Particles } from './particles.js';
 import { shadowTexture } from './textures.js';
@@ -15,8 +15,9 @@ const DIFF = {
 };
 
 const AI_NAMES = ['מנטה', 'סוכריון', 'קרמלה', 'שוקו', 'מרשי', 'טופי', 'לקריצה', 'גומי'];
-const AI_BODIES = ['kart', 'cupcake', 'cookie'];
-const AI_WHEELS = ['donut', 'cookie', 'mint'];
+const AI_BODIES = ['kart', 'cupcake', 'cookie', 'donut', 'gummy', 'icecream'];
+const AI_WHEELS = ['donut', 'cookie', 'mint', 'gumball', 'licorice'];
+const AI_PATTERNS = ['none', 'stripes', 'dots', 'sprinkles', 'none', 'checker'];
 const GHOST_DT = 0.05;
 
 export function medalTimes(track) {
@@ -77,8 +78,12 @@ export class Race {
         k.collectsCoins = true;
         this.addRacer(k, p.car, p.name, hi >= 0 ? hi : 0);
       } else {
-        const body = AI_BODIES[aiCount % 3];
-        const car = { body, wheels: AI_WHEELS[(aiCount + 1) % 3], color: COLORS[(aiCount * 5 + 3) % COLORS.length], accent: COLORS[(aiCount * 7 + 2) % COLORS.length], topper: ['none', 'cherry', 'star', 'bow'][aiCount % 4] };
+        const pick = (list, k) => list[(aiCount * k + (opts.seed || 0)) % list.length];
+        const body = pick(AI_BODIES, 1);
+        const car = {
+          body, wheels: pick(AI_WHEELS, 2), color: pick(COLORS, 5), accent: pick(COLORS, 7),
+          topper: pick(['none', 'cherry', 'star', 'bow', 'candle', 'chef'], 3), pattern: pick(AI_PATTERNS, 1),
+        };
         const k = new Kart(this.track, BODIES[body], { dist, x, assist: 0.5 });
         k.baseMul = diff.aiMul * (0.97 + aiCount * 0.012);
         k.speedMul = k.baseMul;
@@ -461,6 +466,7 @@ export class Race {
     ud.chassis.rotation.z += (roll - ud.chassis.rotation.z) * Math.min(1, dt * 8);
     ud.chassis.rotation.x += (pitch - ud.chassis.rotation.x) * Math.min(1, dt * 8);
     for (const w of ud.wheels) w.rotation.x -= k.v * dt / 0.45;
+    if (ud.spinner) ud.spinner.rotation.y += dt * (6 + Math.abs(k.v) * 0.4);
     for (const p of ud.front) p.rotation.y = -k.input.steer * 0.4;
     ud.shield.visible = k.shield > 0;
     if (k.shield > 0) ud.shield.rotation.y += dt * 2;
@@ -483,7 +489,8 @@ export class Race {
     if (k.boost > 0) {
       for (const ex of ud.exhausts) {
         rear.copy(ex).applyQuaternion(m.quaternion).add(m.position);
-        this.particles.emit(rear, fwd.clone().multiplyScalar(-8), Math.random() < 0.5 ? '#ff6a00' : '#ffd23f', 0.25, 1.5);
+        const cols = (TRAILS[r.car.trail] || TRAILS.classic).colors;
+        this.particles.emit(rear, fwd.clone().multiplyScalar(-8), cols[Math.floor(Math.random() * cols.length)], 0.25, 1.5);
       }
     }
     if (k.spin > 0 && Math.random() < 0.5) {

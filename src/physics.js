@@ -2,8 +2,13 @@
 
 export const BODIES = {
   kart: { name: 'קארט סוכריה', maxSpeed: 46, accel: 25, handling: 2.35, cost: 0 },
-  cupcake: { name: 'קאפקייק טורבו', maxSpeed: 44, accel: 30, handling: 2.65, cost: 40 },
-  cookie: { name: 'עוגיית הברק', maxSpeed: 49.5, accel: 21, handling: 2.15, cost: 90 },
+  cupcake: { name: 'קאפקייק טורבו', maxSpeed: 45, accel: 30, handling: 2.65, cost: 40 },
+  cookie: { name: 'עוגיית הברק', maxSpeed: 48.5, accel: 21, handling: 2.15, cost: 90 },
+  icecream: { name: 'משאית גלידה', maxSpeed: 48, accel: 20, handling: 2.1, cost: 120 },
+  donut: { name: 'דונאט-רייסר', maxSpeed: 45.5, accel: 26, handling: 2.75, cost: 150 },
+  gummy: { name: 'דובון גומי', maxSpeed: 45, accel: 31, handling: 2.5, cost: 180 },
+  choco: { name: 'חטיף שוקולד', maxSpeed: 49, accel: 20, handling: 2.1, cost: 0, unlock: { need: 'gold', n: 3 } },
+  rocket: { name: 'טיל סוכריה', maxSpeed: 47.5, accel: 26, handling: 2.4, cost: 0, unlock: { need: 'trophy', n: 5 } },
 };
 
 const GRAVITY = 28;

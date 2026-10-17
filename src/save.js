@@ -3,9 +3,9 @@ const KEY = 'candyrace_save_v1';
 const DEFAULT = {
   coins: 0,
   ownedTracks: ['lollipop', 'choco'],
-  owned: { bodies: ['kart'], wheels: ['donut'], toppers: ['none'] },
-  car: { body: 'kart', wheels: 'donut', color: '#ff4f8b', accent: '#ffd23f', topper: 'none' },
-  car2: { body: 'cupcake', wheels: 'donut', color: '#4fa3ff', accent: '#ffffff', topper: 'none' },
+  owned: { bodies: ['kart'], wheels: ['donut'], toppers: ['none'], patterns: ['none'], finishes: ['gloss'], trails: ['classic'] },
+  car: { body: 'kart', wheels: 'donut', color: '#ff4f8b', accent: '#ffd23f', topper: 'none', pattern: 'none', finish: 'gloss', trail: 'classic' },
+  car2: { body: 'cupcake', wheels: 'donut', color: '#4fa3ff', accent: '#ffffff', topper: 'none', pattern: 'none', finish: 'gloss', trail: 'classic' },
   name: 'שחקן',
   medals: {},      // trackId -> 0..3 (time trial)
   trophies: {},    // trackId -> best race place (1..6)
