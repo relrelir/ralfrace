@@ -75,13 +75,13 @@ export class Input {
     }
 
     if (player === 0) {
-      const t = this.touch;
-      if (t.left) steer -= 1;
-      if (t.right) steer += 1;
-      if (t.gas) gas = 1;
-      if (t.brake) brake = 1;
-      if (t.drift) drift = true;
-      if (t.itemPressed) { item = true; t.itemPressed = false; }
+      const ts = this.touch;
+      if (ts.left) steer -= 1;
+      if (ts.right) steer += 1;
+      if (ts.gas) gas = 1;
+      if (ts.brake) brake = 1;
+      if (ts.drift) drift = true;
+      if (ts.itemPressed) { item = true; ts.itemPressed = false; }
     }
     return { steer: Math.max(-1, Math.min(1, steer)), gas, brake, drift, item };
   }
@@ -105,22 +105,22 @@ export function createTouchControls(input, { autoGas }) {
       <button data-k="brake" class="small" aria-label="${t('tBrake')}">⏪</button>
       ${autoGas ? '' : `<button data-k="gas" aria-label="${t('tGas')}">⏩</button>`}
     </div>`;
-  const t = input.touch;
-  t.gas = !!autoGas;
-  t.autoGas = !!autoGas;
+  const ts = input.touch;
+  ts.gas = !!autoGas;
+  ts.autoGas = !!autoGas;
   for (const b of root.querySelectorAll('button')) {
     const k = b.dataset.k;
     const on = e => {
       e.preventDefault();
       b.classList.add('on');
-      if (k === 'item') t.itemPressed = true; else t[k] = true;
-      if (k === 'brake' && t.autoGas) t.gas = false;
+      if (k === 'item') ts.itemPressed = true; else ts[k] = true;
+      if (k === 'brake' && ts.autoGas) ts.gas = false;
     };
     const off = e => {
       e.preventDefault();
       b.classList.remove('on');
-      if (k !== 'item') t[k] = false;
-      if (k === 'brake' && t.autoGas) t.gas = true;
+      if (k !== 'item') ts[k] = false;
+      if (k === 'brake' && ts.autoGas) ts.gas = true;
     };
     b.addEventListener('pointerdown', on);
     b.addEventListener('pointerup', off);
@@ -132,8 +132,8 @@ export function createTouchControls(input, { autoGas }) {
 }
 
 export function resetTouch(input) {
-  const t = input.touch;
-  t.left = t.right = t.brake = t.drift = false;
-  t.gas = !!t.autoGas;
-  t.itemPressed = false;
+  const ts = input.touch;
+  ts.left = ts.right = ts.brake = ts.drift = false;
+  ts.gas = !!ts.autoGas;
+  ts.itemPressed = false;
 }
