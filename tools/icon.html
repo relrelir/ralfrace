@@ -1,0 +1,15 @@
+<!doctype html><html><body style="margin:0"><canvas id="c" width="1024" height="1024"></canvas><script>
+const g = document.getElementById('c').getContext('2d');
+const grd = g.createLinearGradient(0, 0, 0, 1024); grd.addColorStop(0, '#7fd3ff'); grd.addColorStop(1, '#ff9ad5');
+g.fillStyle = grd; g.fillRect(0, 0, 1024, 1024);
+// lollipop swirl wheel
+g.save(); g.translate(512, 470);
+g.fillStyle = '#ffffff'; g.beginPath(); g.arc(0, 0, 300, 0, Math.PI * 2); g.fill();
+g.strokeStyle = '#ff4f8b'; g.lineWidth = 46; g.beginPath();
+for (let t = 0; t < 26; t += 0.05) { const r = t * 10.5; const x = Math.cos(t) * r, y = Math.sin(t) * r; t === 0 ? g.moveTo(x, y) : g.lineTo(x, y); }
+g.stroke(); g.restore();
+// checkered flag stripe
+for (let i = 0; i < 16; i++) for (let j = 0; j < 2; j++) { g.fillStyle = (i + j) % 2 ? '#222' : '#fff'; g.fillRect(i * 64, 860 + j * 64, 64, 64); }
+// stick
+g.fillStyle = '#fff'; g.fillRect(492, 770, 40, 90);
+</script></body></html>

@@ -1,0 +1,6 @@
+{
+  "appId": "com.relrelir.ralfrace",
+  "appName": "מרוץ הממתקים",
+  "webDir": "dist",
+  "android": { "backgroundColor": "#ff9ad5" }
+}
