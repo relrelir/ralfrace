@@ -1,0 +1,63 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: ['**']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: android-actions/setup-android@v3
+
+      - run: npm ci
+      - run: npm run build
+
+      - name: Create Android project
+        run: npx cap add android
+
+      - name: App icon
+        continue-on-error: true
+        run: npx --yes @capacitor/assets@3 generate --android --iconBackgroundColor '#ff9ad5' --splashBackgroundColor '#ff9ad5'
+
+      - name: Landscape orientation
+        run: |
+          sed -i -E 's/<activity( |$)/<activity android:screenOrientation="sensorLandscape"\1/' android/app/src/main/AndroidManifest.xml
+          grep -n screenOrientation android/app/src/main/AndroidManifest.xml
+
+      - run: npx cap sync android
+
+      - name: Gradle build
+        working-directory: android
+        run: ./gradlew assembleDebug --no-daemon
+
+      - name: Rename APK
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk candy-race.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: candy-race-apk
+          path: candy-race.apk
+
+      - name: Publish to the "apk-latest" release (main only)
+        if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: apk-latest
+          name: מרוץ הממתקים – APK אחרון
+          body: הורידו את candy-race.apk לטלפון, פתחו אותו ואשרו התקנה ממקור לא ידוע.
+          files: candy-race.apk
+          make_latest: true
