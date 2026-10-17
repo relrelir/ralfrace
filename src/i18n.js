@@ -34,6 +34,9 @@ const en = {
   kmh: 'km/h', go: 'GO!', rocketStart: 'Rocket start!', lastLap: 'Final lap!', lap: 'Lap {n}', lapOf: 'Lap {n}/{of}', timeTrial: 'Time trial',
   win: 'Victory!', blueTurbo: 'Blue turbo!', orangeTurbo: 'Orange turbo!', start: 'START!', rotate: 'Turn your device sideways',
   tLeft: 'Left', tRight: 'Right', tItem: 'Item', tDrift: 'Drift', tBrake: 'Brake', tGas: 'Gas',
+  mCup: '🏆 Championship', cup_sweet: 'Sweet Cup', cup_giant: 'Giant Cup', cupLocked: 'Unlock all its tracks first', cupInfo: '5 races in a row – points for every place, a trophy for the best!',
+  points: 'Points', cupRace: 'Race {n} of {of}', nextRace: 'Next race →', finalStandings: 'Final standings 🏆', champion: '🏆 Champion!', cupPlace: 'Championship place {n}',
+  cupQuit: 'Quit the championship? Your points will be lost.', cupLabel: '🏆 Cup ×{n}', howCup: 'Win a championship (1st place)',
   ai: 'Minty,Sprinkles,Caramel,Choco,Marshy,Taffy,Licorice,Gummy',
 };
 
@@ -68,6 +71,9 @@ const he = {
   kmh: 'קמ"ש', go: '!סעו', rocketStart: '!זינוק טורבו', lastLap: '!הקפה אחרונה', lap: 'הקפה {n}', lapOf: 'הקפה {n}/{of}', timeTrial: 'נגד השעון',
   win: '!ניצחון', blueTurbo: '!טורבו כחול', orangeTurbo: '!טורבו כתום', start: '!סטארט', rotate: 'סובבו את המכשיר לרוחב',
   tLeft: 'שמאלה', tRight: 'ימינה', tItem: 'חפץ', tDrift: 'דריפט', tBrake: 'ברקס', tGas: 'גז',
+  mCup: '🏆 אליפות', cup_sweet: 'גביע הממתקים', cup_giant: 'גביע הענק', cupLocked: 'קודם פתחו את כל המסלולים שלה', cupInfo: '5 מרוצים ברצף – נקודות על כל מקום, וגביע לטובים ביותר!',
+  points: 'נקודות', cupRace: 'מרוץ {n} מתוך {of}', nextRace: 'למרוץ הבא ←', finalStandings: '🏆 תוצאות סופיות', champion: '🏆 !אלופים', cupPlace: 'מקום {n} באליפות',
+  cupQuit: 'לצאת מהאליפות? הנקודות יימחקו.', cupLabel: '🏆 אליפות ×{n}', howCup: 'נצחו באליפות (מקום 1)',
   ai: 'מנטה,סוכריון,קרמלה,שוקו,מרשי,טופי,לקריצה,גומי',
 };
 
@@ -102,6 +108,9 @@ const es = {
   kmh: 'km/h', go: '¡YA!', rocketStart: '¡Salida turbo!', lastLap: '¡Última vuelta!', lap: 'Vuelta {n}', lapOf: 'Vuelta {n}/{of}', timeTrial: 'Contrarreloj',
   win: '¡Victoria!', blueTurbo: '¡Turbo azul!', orangeTurbo: '¡Turbo naranja!', start: '¡SALIDA!', rotate: 'Gira el dispositivo en horizontal',
   tLeft: 'Izquierda', tRight: 'Derecha', tItem: 'Objeto', tDrift: 'Derrape', tBrake: 'Freno', tGas: 'Gas',
+  mCup: '🏆 Campeonato', cup_sweet: 'Copa Dulce', cup_giant: 'Copa Gigante', cupLocked: 'Primero desbloquea todas sus pistas', cupInfo: '5 carreras seguidas: puntos por cada puesto y ¡un trofeo para el mejor!',
+  points: 'Puntos', cupRace: 'Carrera {n} de {of}', nextRace: 'Siguiente carrera →', finalStandings: 'Clasificación final 🏆', champion: '🏆 ¡Campeón!', cupPlace: 'Puesto {n} en el campeonato',
+  cupQuit: '¿Salir del campeonato? Perderás los puntos.', cupLabel: '🏆 Copa ×{n}', howCup: 'Gana un campeonato (1.º)',
   ai: 'Menta,Chispa,Caramela,Choco,Malvi,Toffi,Regaliz,Gomita',
 };
 
@@ -136,6 +145,9 @@ const pt = {
   kmh: 'km/h', go: 'VAI!', rocketStart: 'Largada turbo!', lastLap: 'Última volta!', lap: 'Volta {n}', lapOf: 'Volta {n}/{of}', timeTrial: 'Contra o relógio',
   win: 'Vitória!', blueTurbo: 'Turbo azul!', orangeTurbo: 'Turbo laranja!', start: 'LARGADA!', rotate: 'Vire o aparelho na horizontal',
   tLeft: 'Esquerda', tRight: 'Direita', tItem: 'Item', tDrift: 'Drift', tBrake: 'Freio', tGas: 'Acelerar',
+  mCup: '🏆 Campeonato', cup_sweet: 'Copa Doce', cup_giant: 'Copa Gigante', cupLocked: 'Desbloqueie todas as pistas dela primeiro', cupInfo: '5 corridas seguidas – pontos por posição e um troféu para o melhor!',
+  points: 'Pontos', cupRace: 'Corrida {n} de {of}', nextRace: 'Próxima corrida →', finalStandings: 'Classificação final 🏆', champion: '🏆 Campeão!', cupPlace: '{n}º lugar no campeonato',
+  cupQuit: 'Sair do campeonato? Seus pontos serão perdidos.', cupLabel: '🏆 Copa ×{n}', howCup: 'Vença um campeonato (1º lugar)',
   ai: 'Menta,Granulado,Caramela,Choco,Marsh,Bala,Alcaçuz,Jujuba',
 };
 
@@ -170,6 +182,9 @@ const fr = {
   kmh: 'km/h', go: 'PARTEZ !', rocketStart: 'Départ turbo !', lastLap: 'Dernier tour !', lap: 'Tour {n}', lapOf: 'Tour {n}/{of}', timeTrial: 'Contre-la-montre',
   win: 'Victoire !', blueTurbo: 'Turbo bleu !', orangeTurbo: 'Turbo orange !', start: 'DÉPART !', rotate: 'Tourne ton appareil à l’horizontale',
   tLeft: 'Gauche', tRight: 'Droite', tItem: 'Objet', tDrift: 'Dérapage', tBrake: 'Frein', tGas: 'Accélérer',
+  mCup: '🏆 Championnat', cup_sweet: 'Coupe Sucrée', cup_giant: 'Coupe Géante', cupLocked: 'Débloque d’abord tous ses circuits', cupInfo: '5 courses d’affilée – des points pour chaque place et un trophée pour le meilleur !',
+  points: 'Points', cupRace: 'Course {n} sur {of}', nextRace: 'Course suivante →', finalStandings: 'Classement final 🏆', champion: '🏆 Champion !', cupPlace: '{n}e place au championnat',
+  cupQuit: 'Quitter le championnat ? Tes points seront perdus.', cupLabel: '🏆 Coupe ×{n}', howCup: 'Gagne un championnat (1re place)',
   ai: 'Menthe,Paillette,Caramel,Choco,Guimauve,Toffee,Réglisse,Gommette',
 };
 
@@ -204,6 +219,9 @@ const de = {
   kmh: 'km/h', go: 'LOS!', rocketStart: 'Turbostart!', lastLap: 'Letzte Runde!', lap: 'Runde {n}', lapOf: 'Runde {n}/{of}', timeTrial: 'Zeitfahren',
   win: 'Sieg!', blueTurbo: 'Blauer Turbo!', orangeTurbo: 'Oranger Turbo!', start: 'START!', rotate: 'Dreh dein Gerät quer',
   tLeft: 'Links', tRight: 'Rechts', tItem: 'Item', tDrift: 'Drift', tBrake: 'Bremse', tGas: 'Gas',
+  mCup: '🏆 Meisterschaft', cup_sweet: 'Süßer Pokal', cup_giant: 'Riesen-Pokal', cupLocked: 'Schalte zuerst alle Strecken frei', cupInfo: '5 Rennen hintereinander – Punkte für jeden Platz und ein Pokal für den Besten!',
+  points: 'Punkte', cupRace: 'Rennen {n} von {of}', nextRace: 'Nächstes Rennen →', finalStandings: 'Endstand 🏆', champion: '🏆 Meister!', cupPlace: 'Platz {n} in der Meisterschaft',
+  cupQuit: 'Meisterschaft verlassen? Deine Punkte gehen verloren.', cupLabel: '🏆 Pokal ×{n}', howCup: 'Gewinne eine Meisterschaft (Platz 1)',
   ai: 'Minzi,Streusel,Karamella,Schoko,Marshi,Toffee,Lakritz,Gummi',
 };
 
@@ -224,7 +242,7 @@ const NAMES = {
     'bodies.donut': 'Donut Racer', 'bodies.gummy': 'Gummy Bear', 'bodies.choco': 'Choco Bar', 'bodies.rocket': 'Candy Rocket',
     'wheels.donut': 'Donut', 'wheels.cookie': 'Cookie', 'wheels.mint': 'Peppermint', 'wheels.gumball': 'Gumball', 'wheels.licorice': 'Licorice', 'wheels.jelly': 'Jelly', 'wheels.lolli': 'Lollipop',
     'toppers.none': 'None', 'toppers.cherry': 'Cherry', 'toppers.star': 'Star', 'toppers.bow': 'Bow', 'toppers.candle': 'Birthday candle', 'toppers.antenna': 'Candy antenna',
-    'toppers.chef': 'Chef hat', 'toppers.propeller': 'Propeller', 'toppers.horn': 'Unicorn horn', 'toppers.crown': 'Crown',
+    'toppers.chef': 'Chef hat', 'toppers.propeller': 'Propeller', 'toppers.horn': 'Unicorn horn', 'toppers.crown': 'Crown', 'toppers.trophy': 'Golden trophy',
     'patterns.none': 'Plain', 'patterns.stripes': 'Stripes', 'patterns.dots': 'Dots', 'patterns.sprinkles': 'Sprinkles', 'patterns.checker': 'Checkers', 'patterns.hearts': 'Hearts', 'patterns.flames': 'Flames',
     'finishes.gloss': 'Gloss', 'finishes.matte': 'Matte', 'finishes.metal': 'Metallic', 'finishes.sparkle': 'Glitter',
     'trails.classic': 'Fire', 'trails.rainbow': 'Rainbow', 'trails.hearts': 'Hearts', 'trails.stars': 'Stars', 'trails.snow': 'Snow',
@@ -239,7 +257,7 @@ const NAMES = {
     'bodies.donut': 'Dónut Veloz', 'bodies.gummy': 'Osito de Goma', 'bodies.choco': 'Tableta de Choco', 'bodies.rocket': 'Cohete Dulce',
     'wheels.donut': 'Dónut', 'wheels.cookie': 'Galleta', 'wheels.mint': 'Menta', 'wheels.gumball': 'Chicle bola', 'wheels.licorice': 'Regaliz', 'wheels.jelly': 'Gelatina', 'wheels.lolli': 'Piruleta',
     'toppers.none': 'Nada', 'toppers.cherry': 'Cereza', 'toppers.star': 'Estrella', 'toppers.bow': 'Lazo', 'toppers.candle': 'Vela', 'toppers.antenna': 'Antena dulce',
-    'toppers.chef': 'Gorro de chef', 'toppers.propeller': 'Hélice', 'toppers.horn': 'Cuerno de unicornio', 'toppers.crown': 'Corona',
+    'toppers.chef': 'Gorro de chef', 'toppers.propeller': 'Hélice', 'toppers.horn': 'Cuerno de unicornio', 'toppers.crown': 'Corona', 'toppers.trophy': 'Trofeo de oro',
     'patterns.none': 'Liso', 'patterns.stripes': 'Rayas', 'patterns.dots': 'Lunares', 'patterns.sprinkles': 'Fideos de colores', 'patterns.checker': 'Cuadros', 'patterns.hearts': 'Corazones', 'patterns.flames': 'Llamas',
     'finishes.gloss': 'Brillante', 'finishes.matte': 'Mate', 'finishes.metal': 'Metálico', 'finishes.sparkle': 'Purpurina',
     'trails.classic': 'Fuego', 'trails.rainbow': 'Arcoíris', 'trails.hearts': 'Corazones', 'trails.stars': 'Estrellas', 'trails.snow': 'Nieve',
@@ -254,7 +272,7 @@ const NAMES = {
     'bodies.donut': 'Donut Veloz', 'bodies.gummy': 'Ursinho de Goma', 'bodies.choco': 'Barra de Chocolate', 'bodies.rocket': 'Foguete Doce',
     'wheels.donut': 'Donut', 'wheels.cookie': 'Biscoito', 'wheels.mint': 'Hortelã', 'wheels.gumball': 'Chiclete', 'wheels.licorice': 'Alcaçuz', 'wheels.jelly': 'Gelatina', 'wheels.lolli': 'Pirulito',
     'toppers.none': 'Nada', 'toppers.cherry': 'Cereja', 'toppers.star': 'Estrela', 'toppers.bow': 'Laço', 'toppers.candle': 'Vela', 'toppers.antenna': 'Antena doce',
-    'toppers.chef': 'Chapéu de chef', 'toppers.propeller': 'Hélice', 'toppers.horn': 'Chifre de unicórnio', 'toppers.crown': 'Coroa',
+    'toppers.chef': 'Chapéu de chef', 'toppers.propeller': 'Hélice', 'toppers.horn': 'Chifre de unicórnio', 'toppers.crown': 'Coroa', 'toppers.trophy': 'Troféu de ouro',
     'patterns.none': 'Liso', 'patterns.stripes': 'Listras', 'patterns.dots': 'Bolinhas', 'patterns.sprinkles': 'Granulado', 'patterns.checker': 'Xadrez', 'patterns.hearts': 'Corações', 'patterns.flames': 'Chamas',
     'finishes.gloss': 'Brilhante', 'finishes.matte': 'Fosco', 'finishes.metal': 'Metálico', 'finishes.sparkle': 'Glitter',
     'trails.classic': 'Fogo', 'trails.rainbow': 'Arco-íris', 'trails.hearts': 'Corações', 'trails.stars': 'Estrelas', 'trails.snow': 'Neve',
@@ -269,7 +287,7 @@ const NAMES = {
     'bodies.donut': 'Donut Racer', 'bodies.gummy': 'Ourson Gélifié', 'bodies.choco': 'Tablette Choco', 'bodies.rocket': 'Fusée Bonbon',
     'wheels.donut': 'Donut', 'wheels.cookie': 'Cookie', 'wheels.mint': 'Menthe', 'wheels.gumball': 'Boule de gomme', 'wheels.licorice': 'Réglisse', 'wheels.jelly': 'Gelée', 'wheels.lolli': 'Sucette',
     'toppers.none': 'Aucun', 'toppers.cherry': 'Cerise', 'toppers.star': 'Étoile', 'toppers.bow': 'Nœud', 'toppers.candle': 'Bougie', 'toppers.antenna': 'Antenne bonbon',
-    'toppers.chef': 'Toque de chef', 'toppers.propeller': 'Hélice', 'toppers.horn': 'Corne de licorne', 'toppers.crown': 'Couronne',
+    'toppers.chef': 'Toque de chef', 'toppers.propeller': 'Hélice', 'toppers.horn': 'Corne de licorne', 'toppers.crown': 'Couronne', 'toppers.trophy': 'Trophée en or',
     'patterns.none': 'Uni', 'patterns.stripes': 'Rayures', 'patterns.dots': 'Pois', 'patterns.sprinkles': 'Vermicelles', 'patterns.checker': 'Damier', 'patterns.hearts': 'Cœurs', 'patterns.flames': 'Flammes',
     'finishes.gloss': 'Brillant', 'finishes.matte': 'Mat', 'finishes.metal': 'Métallisé', 'finishes.sparkle': 'Paillettes',
     'trails.classic': 'Feu', 'trails.rainbow': 'Arc-en-ciel', 'trails.hearts': 'Cœurs', 'trails.stars': 'Étoiles', 'trails.snow': 'Neige',
@@ -284,7 +302,7 @@ const NAMES = {
     'bodies.donut': 'Donut-Racer', 'bodies.gummy': 'Gummibär', 'bodies.choco': 'Schokoriegel', 'bodies.rocket': 'Bonbon-Rakete',
     'wheels.donut': 'Donut', 'wheels.cookie': 'Keks', 'wheels.mint': 'Pfefferminz', 'wheels.gumball': 'Kaugummikugel', 'wheels.licorice': 'Lakritz', 'wheels.jelly': 'Wackelpudding', 'wheels.lolli': 'Lutscher',
     'toppers.none': 'Keins', 'toppers.cherry': 'Kirsche', 'toppers.star': 'Stern', 'toppers.bow': 'Schleife', 'toppers.candle': 'Geburtstagskerze', 'toppers.antenna': 'Bonbon-Antenne',
-    'toppers.chef': 'Kochmütze', 'toppers.propeller': 'Propeller', 'toppers.horn': 'Einhorn-Horn', 'toppers.crown': 'Krone',
+    'toppers.chef': 'Kochmütze', 'toppers.propeller': 'Propeller', 'toppers.horn': 'Einhorn-Horn', 'toppers.crown': 'Krone', 'toppers.trophy': 'Goldpokal',
     'patterns.none': 'Glatt', 'patterns.stripes': 'Streifen', 'patterns.dots': 'Punkte', 'patterns.sprinkles': 'Streusel', 'patterns.checker': 'Karo', 'patterns.hearts': 'Herzen', 'patterns.flames': 'Flammen',
     'finishes.gloss': 'Glanz', 'finishes.matte': 'Matt', 'finishes.metal': 'Metallic', 'finishes.sparkle': 'Glitzer',
     'trails.classic': 'Feuer', 'trails.rainbow': 'Regenbogen', 'trails.hearts': 'Herzen', 'trails.stars': 'Sterne', 'trails.snow': 'Schnee',

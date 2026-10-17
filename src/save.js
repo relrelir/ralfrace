@@ -10,6 +10,7 @@ const DEFAULT = {
   medals: {},      // trackId -> 0..3 (time trial)
   trophies: {},    // trackId -> best race place (1..6)
   bestTimes: {},   // trackId -> seconds (time trial, one lap)
+  cups: {},        // cupId -> best championship place
   settings: { difficulty: 'normal', music: 0.5, sfx: 0.8, autoGas: null, quality: 'auto', lang: null },
 };
 
