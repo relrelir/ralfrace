@@ -6,11 +6,11 @@ const DEFAULT = {
   owned: { bodies: ['kart'], wheels: ['donut'], toppers: ['none'], patterns: ['none'], finishes: ['gloss'], trails: ['classic'] },
   car: { body: 'kart', wheels: 'donut', color: '#ff4f8b', accent: '#ffd23f', topper: 'none', pattern: 'none', finish: 'gloss', trail: 'classic' },
   car2: { body: 'cupcake', wheels: 'donut', color: '#4fa3ff', accent: '#ffffff', topper: 'none', pattern: 'none', finish: 'gloss', trail: 'classic' },
-  name: 'שחקן',
+  name: '',
   medals: {},      // trackId -> 0..3 (time trial)
   trophies: {},    // trackId -> best race place (1..6)
   bestTimes: {},   // trackId -> seconds (time trial, one lap)
-  settings: { difficulty: 'normal', music: 0.5, sfx: 0.8, autoGas: null, quality: 'auto' },
+  settings: { difficulty: 'normal', music: 0.5, sfx: 0.8, autoGas: null, quality: 'auto', lang: null },
 };
 
 function clone(o) { return JSON.parse(JSON.stringify(o)); }

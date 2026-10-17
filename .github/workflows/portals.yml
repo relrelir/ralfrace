@@ -1,0 +1,29 @@
+name: Build portal versions (CrazyGames / Poki)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  portals:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npm run build:portals
+      - name: Zip builds
+        run: |
+          (cd dist-crazygames && zip -qr ../candy-kart-crazygames.zip .)
+          (cd dist-poki && zip -qr ../candy-kart-poki.zip .)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: portal-builds
+          path: |
+            candy-kart-crazygames.zip
+            candy-kart-poki.zip

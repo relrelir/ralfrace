@@ -3,3 +3,6 @@ dist/
 android/
 .DS_Store
 test-results/
+dist-crazygames/
+dist-poki/
+covers/
